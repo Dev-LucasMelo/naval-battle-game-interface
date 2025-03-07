@@ -1,0 +1,1 @@
+esse modulo será direcionado ao consumo da api rest que terá as "regras de negócio" do jogo 

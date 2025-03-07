@@ -1,0 +1,1 @@
+aqui deve conter regras e fisica do jogo , algumas configs adicionais 
