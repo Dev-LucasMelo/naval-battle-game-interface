@@ -1,8 +1,12 @@
 mod ui;
+mod logica_do_jogo;
 
 use bevy::prelude::*;
 
 fn main() {
+    //logs
+    env_logger::init();
+
     // adicionar plugins gráficos de cada componente separadamente
     App::new()
         .add_plugins(DefaultPlugins)
