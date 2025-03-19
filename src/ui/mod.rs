@@ -1,1 +1,1 @@
-pub mod componentes;
+pub mod components;

@@ -1,17 +1,16 @@
 mod ui;
-mod logica_do_jogo;
+mod logic;
 
 use bevy::prelude::*;
+use ui::components::ships::debug_spawn_submarine;
 
 fn main() {
-    //logs
     env_logger::init();
 
-    // adicionar plugins gráficos de cada componente separadamente
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(ui::componentes::tabuleiro::Structtabuleiro) // adicionando plugin de tabuleiro
-        .add_systems(Startup, setup)
+        .add_plugins(ui::components::board::Board) // adicionando plugin de tabuleiro
+        .add_systems(Startup, (setup, debug_spawn_submarine))
         .run();
 }
 
