@@ -18,21 +18,21 @@ impl Plugin for Board {
 }
 
 //configs globais do tabuleiro
-const SLOT_SIZE: f32 = 50.0;
-const SLOT_SPACE_BETWEEN: f32 = 4.0;
+pub const SLOT_SIZE: f32 = 60.0;
+pub const SLOT_SPACE_BETWEEN: f32 = 4.0;
 
 const ROWS: usize = 10;
 const COLUMNS: usize = 10;
+const ENEMY_CELL_COLOR: Color = Color::srgb(0.0, 0.2, 0.4);
+const PLAYER_CELL_COLOR: Color = Color::srgb(0.4, 0.7, 1.0);
 
 fn render_board(mut commands: Commands) {
     for row in 0..ROWS {
         for column in 0..COLUMNS {
             let color = if row < ROWS / 2 {
-                //parte do jogador atual
-                Color::srgb(0.4, 0.7, 1.0)
+                PLAYER_CELL_COLOR
             } else {
-                //parte do inimigo
-                Color::srgb(0.0, 0.2, 0.4)
+                ENEMY_CELL_COLOR
             };
 
             let x = (column as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
@@ -40,24 +40,22 @@ fn render_board(mut commands: Commands) {
             let y = (row as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0);
 
-            // Configuracoes do bevy para setar cor tamanho e posicionamento (aplicação de translação)
-            commands
-                .spawn(Sprite {
+            commands.spawn((
+                Sprite {
                     color,
-                    custom_size: Some(Vec2::new(SLOT_SIZE, SLOT_SIZE)), //cria quadrados
+                    custom_size: Some(Vec2::new(SLOT_SIZE, SLOT_SIZE)),
                     ..Default::default()
-                })
-                .insert(
-                    Transform {
-                        translation: Vec3::new(x, y, 0.0), // Posição centralizada
-                        ..Default::default()
-                    }, // posicao do tabuleiro
-                )
-                .insert(Cell {
+                },
+                Transform {
+                    translation: Vec3::new(x, y, 1.0), // centralized position
+                    ..Default::default()
+                },
+                Cell {
                     column,
                     row,
                     marked: false,
-                });
+                },
+            ));
         }
     }
 }
