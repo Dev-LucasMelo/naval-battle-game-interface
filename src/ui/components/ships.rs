@@ -27,6 +27,7 @@ pub struct ShipBundle {
 
 const SUBMARINE_SIZE: usize = 1;
 const BATTLESHIP_SIZE: usize = 3;
+const LARGE_BATTLESHIP_SIZE: usize = 4;
 
 impl ShipBundle {
     pub fn new_submarine(
@@ -84,6 +85,34 @@ impl ShipBundle {
             },
         }
     }
+
+    pub fn new_large_battleship(
+        asset_server: &Res<AssetServer>,
+        direction: Direction,
+        translation: Vec3,
+        cells: Vec<Entity>,
+    ) -> ShipBundle {
+        ShipBundle {
+            ship: Ship {
+                direction: direction.clone(),
+                cells,
+                sunk: false,
+            },
+            transform: Transform {
+                translation,
+                rotation: match direction {
+                    Direction::Horizontal => Quat::from_rotation_z(0.0),
+                    Direction::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
+                },
+                ..Default::default()
+            },
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(LARGE_BATTLESHIP_SIZE as f32 * SLOT_SIZE, SLOT_SIZE)),
+                image: asset_server.load("atlases/large_battleship.png"),
+                ..Default::default()
+            },
+        }
+    }
 }
 
 pub fn debug_spawn_submarine(
@@ -109,10 +138,10 @@ pub fn debug_spawn_submarine(
     );
 
     commands.spawn(
-        ShipBundle::new_battleship(
+        ShipBundle::new_large_battleship(
             &asset_server,
             Direction::Horizontal,
-            Vec3::new(SLOT_SIZE * -4.0 + SLOT_SPACE_BETWEEN * -4.0, 0.0, 2.0),
+            Vec3::new(SLOT_SIZE * 2.0 + SLOT_SPACE_BETWEEN * 2.0 + SLOT_SIZE / 2.0, 0.0, 2.0),
             Vec::new(),
         ),
     );
