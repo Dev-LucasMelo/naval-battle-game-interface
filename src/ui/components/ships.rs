@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::board::{SLOT_SIZE, SLOT_SPACE_BETWEEN};
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum Direction {
     Horizontal,
@@ -113,6 +113,30 @@ impl ShipBundle {
             },
         }
     }
+
+    pub fn calculate_position(
+        ship_size: usize,
+        direction: &Direction,
+        x: i8,
+        y: i8,
+    ) -> Vec3 {
+        let x = x as f32;
+        let y = y as f32;
+
+        Vec3::new(
+            if ship_size % 2 == 0 && direction == &Direction::Horizontal {
+                (SLOT_SIZE * x) + (SLOT_SPACE_BETWEEN * x) + (SLOT_SIZE / 2.0)
+            } else {
+                (SLOT_SIZE * x) + (SLOT_SPACE_BETWEEN * x)
+            },
+            if ship_size % 2 == 0 && direction == &Direction::Vertical {
+                (SLOT_SIZE * y) + (SLOT_SPACE_BETWEEN * y) + (SLOT_SIZE / 2.0)
+            } else {
+                (SLOT_SIZE * y) + (SLOT_SPACE_BETWEEN * y)
+            },
+            2.0,
+        )
+    }
 }
 
 pub fn debug_spawn_submarine(
@@ -120,28 +144,18 @@ pub fn debug_spawn_submarine(
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(
-        ShipBundle::new_submarine(
-            &asset_server,
-            Direction::Horizontal,
-    Vec3::new(0.0, 0.0, 2.0),
-            Vec::new(),
-        ),
-    );
-
-    commands.spawn(
-        ShipBundle::new_battleship(
-            &asset_server,
-            Direction::Vertical,
-            Vec3::new(SLOT_SIZE * 2.0 + SLOT_SPACE_BETWEEN * 2.0, 0.0, 2.0),
-            Vec::new(),
-        ),
-    );
-
-    commands.spawn(
         ShipBundle::new_large_battleship(
             &asset_server,
             Direction::Horizontal,
-            Vec3::new(SLOT_SIZE * 2.0 + SLOT_SPACE_BETWEEN * 2.0 + SLOT_SIZE / 2.0, 0.0, 2.0),
+            ShipBundle::calculate_position(LARGE_BATTLESHIP_SIZE, &Direction::Horizontal, 0, -4),
+            Vec::new(),
+        ),
+    );
+    commands.spawn(
+        ShipBundle::new_battleship(
+            &asset_server,
+            Direction::Horizontal,
+            ShipBundle::calculate_position(BATTLESHIP_SIZE, &Direction::Horizontal, 0, 0),
             Vec::new(),
         ),
     );
