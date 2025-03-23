@@ -10,7 +10,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(ui::components::board::Board) // adicionando plugin de tabuleiro
-        .add_systems(Startup, (setup, debug_spawn_submarine))
+        .add_systems(Startup, setup)
+        .add_systems(PostStartup, debug_spawn_submarine)
         .run();
 }
 

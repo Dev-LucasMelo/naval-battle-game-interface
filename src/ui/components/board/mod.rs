@@ -21,10 +21,10 @@ impl Plugin for Board {
 pub const SLOT_SIZE: f32 = 60.0;
 pub const SLOT_SPACE_BETWEEN: f32 = 4.0;
 
-const ROWS: usize = 10;
-const COLUMNS: usize = 10;
-const ENEMY_CELL_COLOR: Color = Color::srgb(0.0, 0.2, 0.4);
-const PLAYER_CELL_COLOR: Color = Color::srgb(0.4, 0.7, 1.0);
+pub const ROWS: usize = 10;
+pub const COLUMNS: usize = 10;
+pub const ENEMY_CELL_COLOR: Color = Color::srgb(0.0, 0.2, 0.4);
+pub const PLAYER_CELL_COLOR: Color = Color::srgb(0.4, 0.7, 1.0);
 
 fn render_board(mut commands: Commands) {
     for row in 0..ROWS {
