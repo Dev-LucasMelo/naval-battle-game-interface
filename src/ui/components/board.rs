@@ -45,7 +45,7 @@ fn render_board(mut commands: Commands) {
                     ..Default::default()
                 },
                 Transform {
-                    translation: Vec3::new(x, y, 1.0), // centralized position
+                    translation: Vec3::new(x, y, Vec3::default().z),
                     ..Default::default()
                 },
                 Cell {

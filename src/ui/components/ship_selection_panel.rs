@@ -132,20 +132,8 @@ fn handle_ship_selection_button_drag(
 
                 let mut window = window_query.single_mut();
 
-                match ship_option.ship_type {
-                    ShipType::Submarine => {
-                        window.cursor_options.grab_mode = CursorGrabMode::None;
-                        window.cursor_options.visible = true;
-                    }
-                    ShipType::Battleship => {
-                        window.cursor_options.grab_mode = CursorGrabMode::None;
-                        window.cursor_options.visible = true;
-                    }
-                    ShipType::LargeBattleship => {
-                        window.cursor_options.grab_mode = CursorGrabMode::None;
-                        window.cursor_options.visible = true;
-                    }
-                }
+                window.cursor_options.grab_mode = CursorGrabMode::None;
+                window.cursor_options.visible = true;
 
                 commands.spawn((
                     SelectedShip(ship_option.ship_type.clone()),
@@ -282,7 +270,7 @@ fn handle_selected_ship_button_drop(
     mut commands: Commands,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
     mut selected_ship_query: Query<(Entity, &SelectedShip, &ShipDirection, &mut Transform), With<SelectedShip>>,
-    cells_query: Query<(Entity, &Transform, &Cell), Without<SelectedShip>>,
+    cells_query: Query<(Entity, &Transform, &Cell, &CellSide), Without<SelectedShip>>,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let mut window = window_query.single_mut();
@@ -355,7 +343,11 @@ fn handle_selected_ship_button_drop(
             },
         } / 2.0;
 
-        for (cell_entity, cell_transform, cell) in cells_query.iter() {
+        for (cell_entity, cell_transform, cell, cell_side) in cells_query.iter() {
+            if cell_side == &CellSide::Enemy {
+                continue;
+            }
+
             let x1 = cell_transform.translation.x - x_range;
             let x2 = cell_transform.translation.x + x_range;
             let y1 = cell_transform.translation.y - y_range;
@@ -365,6 +357,13 @@ fn handle_selected_ship_button_drop(
                 cell_entities.push(cell_entity);
                 cells.push(cell);
             }
+        }
+
+        if cell_entities.len() == 0 {
+            commands.entity(selected_ship_entity).despawn_recursive();
+            window.cursor_options.grab_mode = CursorGrabMode::None;
+            window.cursor_options.visible = true;
+            return;
         }
 
         let final_ship_position = ShipBundle::calculate_position(
@@ -380,7 +379,7 @@ fn handle_selected_ship_button_drop(
 
         ship_transform.translation.x = final_ship_position.x;
         ship_transform.translation.y = final_ship_position.y;
-        ship_transform.translation.z = final_ship_position.z + 1.0;
+        ship_transform.translation.z = final_ship_position.z;
 
         commands.entity(selected_ship_entity).remove::<SelectedShip>();
 
