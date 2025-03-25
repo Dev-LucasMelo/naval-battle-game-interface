@@ -6,7 +6,15 @@ use super::board::{COLUMNS, ROWS, SLOT_SIZE, SLOT_SPACE_BETWEEN};
 
 #[derive(Component, Clone, PartialEq, Debug)]
 #[allow(dead_code)]
-pub enum Direction {
+pub enum ShipType {
+    Submarine,
+    Battleship,
+    LargeBattleship,
+}
+
+#[derive(Component, Clone, PartialEq, Debug)]
+#[allow(dead_code)]
+pub enum ShipDirection {
     Horizontal,
     Vertical,
 }
@@ -14,7 +22,7 @@ pub enum Direction {
 #[derive(Component, Clone)]
 #[allow(dead_code)]
 pub struct Ship {
-    pub direction: Direction,
+    pub r#type: ShipType,
     pub cells: Vec<Entity>,
     pub sunk: bool,
 }
@@ -23,34 +31,36 @@ pub struct Ship {
 #[allow(dead_code)]
 pub struct ShipBundle {
     pub ship: Ship,
+    pub direction: ShipDirection,
     pub transform: Transform,
     pub sprite: Sprite,
 }
 
-const SUBMARINE_SIZE: usize = 1;
-const BATTLESHIP_SIZE: usize = 3;
-const LARGE_BATTLESHIP_SIZE: usize = 4;
+pub const SUBMARINE_SIZE: usize = 1;
+pub const BATTLESHIP_SIZE: usize = 3;
+pub const LARGE_BATTLESHIP_SIZE: usize = 4;
 
 #[allow(dead_code)]
 impl ShipBundle {
     pub fn new_submarine(
         asset_server: &Res<AssetServer>,
-        direction: Direction,
+        direction: ShipDirection,
         x: i8,
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
     ) -> ShipBundle {
         ShipBundle {
             ship: Ship {
-                direction: direction.clone(),
+                r#type: ShipType::Submarine,
                 cells: Self::find_cells_for_ship(x, y, SUBMARINE_SIZE, &direction, &cells_query),
                 sunk: false,
             },
+            direction: direction.clone(),
             transform: Transform {
                 translation: ShipBundle::calculate_position(SUBMARINE_SIZE, &direction, x, y),
                 rotation: match direction {
-                    Direction::Horizontal => Quat::from_rotation_z(0.0),
-                    Direction::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
+                    ShipDirection::Horizontal => Quat::from_rotation_z(0.0),
+                    ShipDirection::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
                 },
                 ..Default::default()
             },
@@ -64,22 +74,23 @@ impl ShipBundle {
 
     pub fn new_battleship(
         asset_server: &Res<AssetServer>,
-        direction: Direction,
+        direction: ShipDirection,
         x: i8,
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
     ) -> ShipBundle {
         ShipBundle {
             ship: Ship {
-                direction: direction.clone(),
+                r#type: ShipType::Battleship,
                 cells: Self::find_cells_for_ship(x, y, BATTLESHIP_SIZE, &direction, &cells_query),
                 sunk: false,
             },
+            direction: direction.clone(),
             transform: Transform {
                 translation: ShipBundle::calculate_position(BATTLESHIP_SIZE, &direction, x, y),
                 rotation: match direction {
-                    Direction::Horizontal => Quat::from_rotation_z(0.0),
-                    Direction::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
+                    ShipDirection::Horizontal => Quat::from_rotation_z(0.0),
+                    ShipDirection::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
                 },
                 ..Default::default()
             },
@@ -93,22 +104,23 @@ impl ShipBundle {
 
     pub fn new_large_battleship(
         asset_server: &Res<AssetServer>,
-        direction: Direction,
+        direction: ShipDirection,
         x: i8,
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
     ) -> ShipBundle {
         ShipBundle {
             ship: Ship {
-                direction: direction.clone(),
+                r#type: ShipType::LargeBattleship,
                 cells: Self::find_cells_for_ship(x, y, LARGE_BATTLESHIP_SIZE, &direction, &cells_query),
                 sunk: false,
             },
+            direction: direction.clone(),
             transform: Transform {
                 translation: ShipBundle::calculate_position(LARGE_BATTLESHIP_SIZE, &direction, x, y),
                 rotation: match direction {
-                    Direction::Horizontal => Quat::from_rotation_z(0.0),
-                    Direction::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
+                    ShipDirection::Horizontal => Quat::from_rotation_z(0.0),
+                    ShipDirection::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
                 },
                 ..Default::default()
             },
@@ -122,7 +134,7 @@ impl ShipBundle {
 
     pub fn calculate_position(
         ship_size: usize,
-        direction: &Direction,
+        direction: &ShipDirection,
         x: i8,
         y: i8,
     ) -> Vec3 {
@@ -130,7 +142,7 @@ impl ShipBundle {
         let y = y as f32;
 
         Vec3::new(
-            if ship_size % 2 == 0 && direction == &Direction::Horizontal {
+            if ship_size % 2 == 0 && direction == &ShipDirection::Horizontal {
                 (x as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
                 + (SLOT_SIZE * 1.5)
@@ -138,7 +150,7 @@ impl ShipBundle {
                 (x as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
             },
-            if ship_size % 2 == 0 && direction == &Direction::Vertical {
+            if ship_size % 2 == 0 && direction == &ShipDirection::Vertical {
                 (y as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
                 + (SLOT_SIZE * 1.5)
@@ -154,14 +166,14 @@ impl ShipBundle {
         x: i8,
         y: i8,
         ship_size: usize,
-        direction: &Direction,
+        direction: &ShipDirection,
         cells_query: &Query<(Entity, &Cell)>
     ) -> Vec<Entity> {
         let mut cells = Vec::new();
 
         for i in 0..ship_size {
-            let target_x = if *direction == Direction::Horizontal { x + i as i8 } else { x };
-            let target_y = if *direction == Direction::Vertical { y + i as i8 } else { y };
+            let target_x = if *direction == ShipDirection::Horizontal { x + i as i8 } else { x };
+            let target_y = if *direction == ShipDirection::Vertical { y + i as i8 } else { y };
 
             if let Some((entity, _)) = cells_query
                 .iter()
@@ -183,7 +195,7 @@ pub fn debug_spawn_submarine(
     commands.spawn(
         ShipBundle::new_large_battleship(
             &asset_server,
-            Direction::Vertical,
+            ShipDirection::Vertical,
             1,
             1,
             &cells_query,
