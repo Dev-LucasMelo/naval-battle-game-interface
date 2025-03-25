@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::{CursorGrabMode, PrimaryWindow}};
 
-use crate::logic::cell::Cell;
+use crate::logic::cell::{Cell, CellSide};
 
 use super::{board::{PLAYER_CELL_COLOR, SLOT_SIZE, SLOT_SPACE_BETWEEN}, ships::{ShipBundle, ShipDirection, ShipType, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE}};
 
@@ -186,7 +186,7 @@ fn handle_ship_selection_button_drag(
 
 fn handle_selected_ship_translation_with_cursor(
     mut selected_ship_query: Query<(&SelectedShip, &ShipDirection, &mut Transform), Without<Cell>>,
-    mut cells_query: Query<(&mut Sprite, &Transform), With<Cell>>,
+    mut cells_query: Query<(&mut Sprite, &Transform, &CellSide), With<Cell>>,
     window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let window = window_query.single();
@@ -212,7 +212,11 @@ fn handle_selected_ship_translation_with_cursor(
 
     // when the cursor is over the board, change covered cells color
 
-    for (mut cell_sprite, cell_transform) in cells_query.iter_mut() {
+    for (mut cell_sprite, cell_transform, cell_side) in cells_query.iter_mut() {
+        if cell_side == &CellSide::Enemy {
+            continue;
+        }
+
         let x_range = match selected_ship.0 {
             ShipType::Submarine => {
                 if ship_direction == &ShipDirection::Horizontal {
@@ -379,8 +383,6 @@ fn handle_selected_ship_button_drop(
         ship_transform.translation.z = final_ship_position.z + 1.0;
 
         commands.entity(selected_ship_entity).remove::<SelectedShip>();
-
-        // let mut can_place_ship = true;
 
         window.cursor_options.grab_mode = CursorGrabMode::None;
         window.cursor_options.visible = true;

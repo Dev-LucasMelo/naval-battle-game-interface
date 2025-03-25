@@ -158,7 +158,7 @@ impl ShipBundle {
                 (y as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
             },
-            2.0,
+            4.0,
         )
     }
 

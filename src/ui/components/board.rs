@@ -1,4 +1,4 @@
-use crate::logic::cell::Cell;
+use crate::logic::cell::{Cell, CellSide};
 use bevy::input::{mouse::MouseButtonInput, ButtonState};
 
 pub use bevy::prelude::*;
@@ -29,12 +29,6 @@ pub const PLAYER_CELL_COLOR: Color = Color::srgb(0.4, 0.7, 1.0);
 fn render_board(mut commands: Commands) {
     for row in 0..ROWS {
         for column in 0..COLUMNS {
-            let color = if row < ROWS / 2 {
-                PLAYER_CELL_COLOR
-            } else {
-                ENEMY_CELL_COLOR
-            };
-
             let x = (column as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0);
             let y = (row as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
@@ -42,7 +36,11 @@ fn render_board(mut commands: Commands) {
 
             commands.spawn((
                 Sprite {
-                    color,
+                    color: if row < ROWS / 2 {
+                        PLAYER_CELL_COLOR
+                    } else {
+                        ENEMY_CELL_COLOR
+                    },
                     custom_size: Some(Vec2::new(SLOT_SIZE, SLOT_SIZE)),
                     ..Default::default()
                 },
@@ -54,6 +52,11 @@ fn render_board(mut commands: Commands) {
                     column,
                     row,
                     marked: false,
+                },
+                if row < ROWS / 2 {
+                    CellSide::Player
+                } else {
+                    CellSide::Enemy
                 },
             ));
         }
