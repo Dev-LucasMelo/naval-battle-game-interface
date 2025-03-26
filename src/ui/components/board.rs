@@ -1,4 +1,4 @@
-use crate::logic::cell::Cell;
+use crate::logic::cell::{Cell, CellSide};
 use bevy::input::{mouse::MouseButtonInput, ButtonState};
 
 pub use bevy::prelude::*;
@@ -21,20 +21,14 @@ impl Plugin for Board {
 pub const SLOT_SIZE: f32 = 60.0;
 pub const SLOT_SPACE_BETWEEN: f32 = 4.0;
 
-const ROWS: usize = 10;
-const COLUMNS: usize = 10;
-const ENEMY_CELL_COLOR: Color = Color::srgb(0.0, 0.2, 0.4);
-const PLAYER_CELL_COLOR: Color = Color::srgb(0.4, 0.7, 1.0);
+pub const ROWS: usize = 10;
+pub const COLUMNS: usize = 10;
+pub const ENEMY_CELL_COLOR: Color = Color::srgb(0.0, 0.2, 0.4);
+pub const PLAYER_CELL_COLOR: Color = Color::srgb(0.4, 0.7, 1.0);
 
 fn render_board(mut commands: Commands) {
     for row in 0..ROWS {
         for column in 0..COLUMNS {
-            let color = if row < ROWS / 2 {
-                PLAYER_CELL_COLOR
-            } else {
-                ENEMY_CELL_COLOR
-            };
-
             let x = (column as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0);
             let y = (row as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
@@ -42,18 +36,27 @@ fn render_board(mut commands: Commands) {
 
             commands.spawn((
                 Sprite {
-                    color,
+                    color: if row < ROWS / 2 {
+                        PLAYER_CELL_COLOR
+                    } else {
+                        ENEMY_CELL_COLOR
+                    },
                     custom_size: Some(Vec2::new(SLOT_SIZE, SLOT_SIZE)),
                     ..Default::default()
                 },
                 Transform {
-                    translation: Vec3::new(x, y, 1.0), // centralized position
+                    translation: Vec3::new(x, y, Vec3::default().z),
                     ..Default::default()
                 },
                 Cell {
                     column,
                     row,
                     marked: false,
+                },
+                if row < ROWS / 2 {
+                    CellSide::Player
+                } else {
+                    CellSide::Enemy
                 },
             ));
         }

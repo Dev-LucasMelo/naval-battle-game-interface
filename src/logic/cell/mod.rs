@@ -1,10 +1,17 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Cell {
     pub row: usize,
     pub column: usize,
-    pub marked: bool
+    pub marked: bool,
+}
+
+
+#[derive(Component, Debug, PartialEq)]
+pub enum CellSide {
+    Player,
+    Enemy,
 }
 
 /**
