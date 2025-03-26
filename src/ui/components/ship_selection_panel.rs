@@ -186,7 +186,7 @@ fn handle_selected_ship_translation_with_cursor(
     let x = cursor_position.x - window.width() / 2.0;
     let y = (window.height() - cursor_position.y) - window.height() / 2.0;
 
-    let cursor_world_position = Vec3::new(x, y, 0.0);
+    let cursor_world_position = Vec3::new(x, y, Vec3::default().z);
 
     let Some((
         selected_ship,
@@ -270,7 +270,7 @@ fn handle_selected_ship_button_drop(
     mut commands: Commands,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
     mut selected_ship_query: Query<(Entity, &SelectedShip, &ShipDirection, &mut Transform), With<SelectedShip>>,
-    cells_query: Query<(Entity, &Transform, &Cell, &CellSide), Without<SelectedShip>>,
+    mut cells_query: Query<(Entity, &Transform, &mut Sprite, &Cell, &CellSide), Without<SelectedShip>>,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let mut window = window_query.single_mut();
@@ -292,7 +292,6 @@ fn handle_selected_ship_button_drop(
     };
 
     if mouse_button_input.just_released(MouseButton::Right) && window.cursor_options.grab_mode == CursorGrabMode::None {
-        let mut cell_entities = Vec::new();
         let mut cells = Vec::new();
 
         let x_range = match selected_ship.0 {
@@ -343,7 +342,7 @@ fn handle_selected_ship_button_drop(
             },
         } / 2.0;
 
-        for (cell_entity, cell_transform, cell, cell_side) in cells_query.iter() {
+        for (_, cell_transform, _, cell, cell_side) in cells_query.iter() {
             if cell_side == &CellSide::Enemy {
                 continue;
             }
@@ -354,17 +353,26 @@ fn handle_selected_ship_button_drop(
             let y2 = cell_transform.translation.y + y_range;
 
             if window_x >= x1 && window_x <= x2 && window_y >= y1 && window_y <= y2 {
-                cell_entities.push(cell_entity);
                 cells.push(cell);
             }
         }
 
-        if cell_entities.len() == 0 {
+        if cells.len() == 0 {
             commands.entity(selected_ship_entity).despawn_recursive();
             window.cursor_options.grab_mode = CursorGrabMode::None;
             window.cursor_options.visible = true;
             return;
         }
+
+        commands.entity(selected_ship_entity).remove::<SelectedShip>();
+
+        cells.sort_by(|a, b| {
+            if a.row == b.row {
+                a.column.cmp(&b.column)
+            } else {
+                a.row.cmp(&b.row)
+            }
+        });
 
         let final_ship_position = ShipBundle::calculate_position(
             match selected_ship.0 {
@@ -381,7 +389,11 @@ fn handle_selected_ship_button_drop(
         ship_transform.translation.y = final_ship_position.y;
         ship_transform.translation.z = final_ship_position.z;
 
-        commands.entity(selected_ship_entity).remove::<SelectedShip>();
+        for (_, _, mut cell_sprite, _, cell_side) in cells_query.iter_mut() {
+            if cell_side == &CellSide::Player {
+                cell_sprite.color = PLAYER_CELL_COLOR;
+            }
+        }
 
         window.cursor_options.grab_mode = CursorGrabMode::None;
         window.cursor_options.visible = true;
