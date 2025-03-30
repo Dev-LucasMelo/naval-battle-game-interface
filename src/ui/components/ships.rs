@@ -49,6 +49,13 @@ impl ShipBundle {
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
     ) -> ShipBundle {
+
+        let color = if y > 4 {  // Posição y maior ou igual a 0 (parte superior - inimigo)
+            Color::srgba(1.0, 1.0, 1.0,0.0) // Azul claro para inimigos
+        } else {
+            Color::srgba(1.0, 1.0, 1.0,1.0) // Cor padrão para o jogador
+        };
+
         ShipBundle {
             ship: Ship {
                 r#type: ShipType::Submarine,
@@ -67,9 +74,12 @@ impl ShipBundle {
             sprite: Sprite {
                 custom_size: Some(Vec2::new(SUBMARINE_SIZE as f32 * SLOT_SIZE, SLOT_SIZE)),
                 image: asset_server.load("atlases/submarine.png"),
+                color,
                 ..Default::default()
             },
+            
         }
+       
     }
 
     pub fn new_battleship(
@@ -79,6 +89,13 @@ impl ShipBundle {
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
     ) -> ShipBundle {
+
+        let color = if y > 4 {  // Posição y maior ou igual a 0 (parte superior - inimigo)
+            Color::srgba(1.0, 1.0, 1.0,0.0) // Azul claro para inimigos
+        } else {
+            Color::srgba(1.0, 1.0, 1.0,1.0) // Cor padrão para o jogador
+        };
+
         ShipBundle {
             ship: Ship {
                 r#type: ShipType::Battleship,
@@ -97,6 +114,7 @@ impl ShipBundle {
             sprite: Sprite {
                 custom_size: Some(Vec2::new(BATTLESHIP_SIZE as f32 * SLOT_SIZE, SLOT_SIZE)),
                 image: asset_server.load("atlases/battleship.png"),
+                color,
                 ..Default::default()
             },
         }
@@ -109,6 +127,13 @@ impl ShipBundle {
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
     ) -> ShipBundle {
+
+        let color = if y > 4 {  // Posição y maior ou igual a 0 (parte superior - inimigo)
+            Color::srgba(1.0, 1.0, 1.0,0.0) // Azul claro para inimigos
+        } else {
+            Color::srgba(1.0, 1.0, 1.0,1.0) // Cor padrão para o jogador
+        };
+
         ShipBundle {
             ship: Ship {
                 r#type: ShipType::LargeBattleship,
@@ -127,6 +152,7 @@ impl ShipBundle {
             sprite: Sprite {
                 custom_size: Some(Vec2::new(LARGE_BATTLESHIP_SIZE as f32 * SLOT_SIZE, SLOT_SIZE)),
                 image: asset_server.load("atlases/large_battleship.png"),
+                color,
                 ..Default::default()
             },
         }
@@ -211,4 +237,15 @@ pub fn debug_spawn_submarine(
             &cells_query,
         ),
     );
+}
+
+// função que vai escutar a mudança de sunk e vai fazer algo a partir disso
+pub fn check_sunk_change(
+    mut query: Query<(&mut Ship, &mut Sprite)>,
+) {
+    for (ship,mut sprite) in query.iter_mut() {
+        if ship.sunk {
+            sprite.color = Color::srgba(1.0, 1.0, 1.0, 1.0);
+        }
+    }
 }

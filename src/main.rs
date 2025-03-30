@@ -1,8 +1,12 @@
-mod ui;
 mod logic;
+mod ui;
 
 use bevy::prelude::*;
-use ui::components::{board::Board, ship_selection_panel::ShipSelectionPanel, ships::debug_spawn_submarine};
+use ui::components::{
+    board::Board,
+    ship_selection_panel::ShipSelectionPanel,
+    ships::{check_sunk_change, debug_spawn_submarine},
+};
 
 fn main() {
     env_logger::init();
@@ -13,10 +17,11 @@ fn main() {
         .add_plugins(ShipSelectionPanel)
         .add_systems(Startup, setup)
         .add_systems(PostStartup, debug_spawn_submarine)
+        .add_systems(Update, check_sunk_change)
         .run();
 }
 
 //função setup serve para inicializar o sistema e configurações gerais do ambiente gráfico
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d::default());
+    commands.spawn(Camera2d);
 }

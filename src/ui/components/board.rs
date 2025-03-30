@@ -7,6 +7,12 @@ use crate::ui::components::ships::Ship;
 
 pub struct Board;
 
+//struct que vai representar o total de cliques do jogo globalmente 
+#[derive(Default, Resource)]
+pub struct ClickedCells {
+    pub cells: Vec<Entity>,
+}
+
 /**
  * criando um plugin bevy para criar o
  * tabuleiro a partir de uma função que vai ser chamada
@@ -16,6 +22,7 @@ impl Plugin for Board {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, render_board);
         app.add_systems(Update, handle_click);
+        app.insert_resource(ClickedCells::default()); //adicionando struct como recurso global do bevy
     }
 }
 
@@ -70,7 +77,8 @@ fn handle_click(
     mut mouse_button_input: EventReader<MouseButtonInput>,
     camera_query: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
-    ships_query: Query<(Entity, &Ship)>,
+    mut ships_query: Query<(Entity, &mut Ship)>,
+    mut clicked_cells: ResMut<ClickedCells>,
 ) {
     for event in mouse_button_input.read() {
         if event.button == MouseButton::Left && event.state == ButtonState::Pressed {
@@ -105,10 +113,9 @@ fn handle_click(
                 };
 
                 if cell_area.contains(point.xy()) {
-                    // println!("clicou na posicao: [{column}][{row}]");
                     
                     if cell.row > (ROWS / 2) - 1 && !cell.marked {
-                        cell.mark(&mut sprite, &ships_query, entity);
+                        cell.mark(&mut sprite, &mut ships_query, entity,&mut clicked_cells.cells);
                     } else if cell.marked {
                         println!("celula já marcada posicao");
                     } else {

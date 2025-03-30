@@ -9,45 +9,45 @@ pub struct Cell {
     pub marked: bool,
 }
 
-
 #[derive(Component, Debug, PartialEq)]
 pub enum CellSide {
     Player,
     Enemy,
 }
 
-/**
- * vai conter a logica / regras para o funcionamento da celula do tabuleiro,
- * ela deve conter um atributo para configurar se está marcada ou não, e deve receber tambem
- * um atributo referente a peça do navio que está armazenada nela
- */
 impl Cell {
-
     pub fn mark(
-        &mut self, 
+        &mut self,
         sprite: &mut Sprite,
-        ships_query: &Query<(Entity, &Ship)>,
-        entity: Entity
+        ships_query: &mut Query<(Entity, &mut Ship)>,
+        entity_alvo: Entity,
+        clicked_cells: &mut Vec<Entity>, //referencia do vetor de celulas clicadas
     ) {
-        let mut validator: bool = false;
-        let mut navio_alvo: Option<&Ship> = None;
+        clicked_cells.push(entity_alvo);
 
-        //compara referencias
-        for (_entity, ship) in ships_query.iter() {
-            if ship.cells.contains(&entity) {
+        let mut validator: bool = false;
+        
+        for (_entity,mut ship) in ships_query.iter_mut() {
+        
+            if ship.cells.contains(&entity_alvo) {
                 validator = true;
-                navio_alvo =  Some(ship);
+                let all_cells_clicked = ship.cells.iter().all(|cell| clicked_cells.contains(cell));
+
+                if all_cells_clicked {
+                    ship.sunk = true;
+                }
+
+                break;
             }
+        
         }
 
         if validator {
-            println!("A célula clicada pertence ao navio: {:?}", navio_alvo);
-            sprite.color = Color::srgb(0.255, 0.0, 0.0,);
-        }else{
-            println!("atirou no mar");
+            sprite.color = Color::srgb(0.255, 0.0, 0.0);
+        } else {
             sprite.color = Color::srgb(0.28, 0.28, 0.28);
         }
-        
+
         self.marked = true;
     }
 }
