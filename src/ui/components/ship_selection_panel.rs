@@ -1,8 +1,16 @@
-use bevy::{prelude::*, window::{CursorGrabMode, PrimaryWindow}};
+use bevy::{
+    prelude::*,
+    window::{CursorGrabMode, PrimaryWindow},
+};
 
 use crate::logic::cell::{Cell, CellSide};
 
-use super::{board::{PLAYER_CELL_COLOR, SLOT_SIZE, SLOT_SPACE_BETWEEN}, ships::{ShipBundle, ShipDirection, ShipType, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE}};
+use super::{
+    board::{PLAYER_CELL_COLOR, SLOT_SIZE, SLOT_SPACE_BETWEEN},
+    ships::{
+        ShipBundle, ShipDirection, ShipType, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE,
+    },
+};
 
 #[derive(Component)]
 #[allow(dead_code)]
@@ -21,13 +29,15 @@ pub struct SelectedShip(pub ShipType);
 #[allow(dead_code)]
 impl Plugin for ShipSelectionPanel {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(Startup, setup_ship_selection_panel)
-            .add_systems(Update, (
-                handle_ship_selection_button_drag,
-                handle_selected_ship_translation_with_cursor,
-                handle_selected_ship_button_drop,
-            ));
+        app.add_systems(Startup, setup_ship_selection_panel)
+            .add_systems(
+                Update,
+                (
+                    handle_ship_selection_button_drag,
+                    handle_selected_ship_translation_with_cursor,
+                    handle_selected_ship_button_drop,
+                ),
+            );
     }
 }
 
@@ -62,10 +72,7 @@ impl OptionButtonUI {
     }
 }
 
-fn setup_ship_selection_panel(
-    assert_server: Res<AssetServer>,
-    mut commands: Commands,
-) {
+fn setup_ship_selection_panel(assert_server: Res<AssetServer>, mut commands: Commands) {
     commands
         .spawn(Node {
             position_type: PositionType::Absolute,
@@ -83,24 +90,29 @@ fn setup_ship_selection_panel(
         .with_children(|parent| {
             parent
                 .spawn(OptionButtonUI::new())
-                .insert(ShipOption { ship_type: ShipType::Submarine })
+                .insert(ShipOption {
+                    ship_type: ShipType::Submarine,
+                })
                 .with_children(|parent| {
-                    parent
-                        .spawn(ImageNode::new(assert_server.load("atlases/submarine.png")));
+                    parent.spawn(ImageNode::new(assert_server.load("atlases/submarine.png")));
                 });
             parent
                 .spawn(OptionButtonUI::new())
-                .insert(ShipOption { ship_type: ShipType::Battleship })
+                .insert(ShipOption {
+                    ship_type: ShipType::Battleship,
+                })
                 .with_children(|parent| {
-                    parent
-                        .spawn(ImageNode::new(assert_server.load("atlases/battleship.png")));
+                    parent.spawn(ImageNode::new(assert_server.load("atlases/battleship.png")));
                 });
             parent
                 .spawn(OptionButtonUI::new())
-                .insert(ShipOption { ship_type: ShipType::LargeBattleship })
+                .insert(ShipOption {
+                    ship_type: ShipType::LargeBattleship,
+                })
                 .with_children(|parent| {
-                    parent
-                        .spawn(ImageNode::new(assert_server.load("atlases/large_battleship.png")));
+                    parent.spawn(ImageNode::new(
+                        assert_server.load("atlases/large_battleship.png"),
+                    ));
                 });
         });
 }
@@ -109,12 +121,7 @@ fn handle_ship_selection_button_drag(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut interaction_query: Query<
-        (
-            &Button,
-            &Interaction,
-            &ShipOption,
-            &mut Transform,
-        ),
+        (&Button, &Interaction, &ShipOption, &mut Transform),
         (Changed<Interaction>, With<Button>),
     >,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
@@ -188,11 +195,9 @@ fn handle_selected_ship_translation_with_cursor(
 
     let cursor_world_position = Vec3::new(x, y, Vec3::default().z);
 
-    let Some((
-        selected_ship,
-        ship_direction,
-        mut ship_transform,
-    )) = selected_ship_query.iter_mut().next() else {
+    let Some((selected_ship, ship_direction, mut ship_transform)) =
+        selected_ship_query.iter_mut().next()
+    else {
         return;
     };
 
@@ -212,21 +217,21 @@ fn handle_selected_ship_translation_with_cursor(
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::Battleship => {
                 if ship_direction == &ShipDirection::Horizontal {
                     BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::LargeBattleship => {
                 if ship_direction == &ShipDirection::Horizontal {
                     LARGE_BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
         } / 2.0;
 
         let y_range = match selected_ship.0 {
@@ -236,21 +241,21 @@ fn handle_selected_ship_translation_with_cursor(
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::Battleship => {
                 if ship_direction == &ShipDirection::Vertical {
                     BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::LargeBattleship => {
                 if ship_direction == &ShipDirection::Vertical {
                     LARGE_BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
         } / 2.0;
 
         let x1 = cell_transform.translation.x - x_range;
@@ -269,8 +274,20 @@ fn handle_selected_ship_translation_with_cursor(
 fn handle_selected_ship_button_drop(
     mut commands: Commands,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
-    mut selected_ship_query: Query<(Entity, &SelectedShip, &ShipDirection, &mut Transform), With<SelectedShip>>,
-    mut cells_query: Query<(Entity, &Transform, &mut Sprite, &Cell, &CellSide), Without<SelectedShip>>,
+    mut selected_ship_query: Query<
+        (
+            Entity,
+            &SelectedShip,
+            &ShipDirection,
+            &mut Transform,
+            &mut Sprite,
+        ),
+        With<SelectedShip>,
+    >,
+    mut cells_query: Query<
+        (Entity, &Transform, &mut Sprite, &Cell, &CellSide),
+        Without<SelectedShip>,
+    >,
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let mut window = window_query.single_mut();
@@ -287,11 +304,15 @@ fn handle_selected_ship_button_drop(
         selected_ship,
         ship_direction,
         mut ship_transform,
-    )) = selected_ship_query.get_single_mut() else {
+        mut _ship_sprite,
+    )) = selected_ship_query.get_single_mut()
+    else {
         return;
     };
 
-    if mouse_button_input.just_released(MouseButton::Right) && window.cursor_options.grab_mode == CursorGrabMode::None {
+    if mouse_button_input.just_released(MouseButton::Right)
+        && window.cursor_options.grab_mode == CursorGrabMode::None
+    {
         let mut cells = Vec::new();
 
         let x_range = match selected_ship.0 {
@@ -301,21 +322,21 @@ fn handle_selected_ship_button_drop(
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::Battleship => {
                 if ship_direction == &ShipDirection::Horizontal {
                     BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::LargeBattleship => {
                 if ship_direction == &ShipDirection::Horizontal {
                     LARGE_BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
         } / 2.0;
 
         let y_range = match selected_ship.0 {
@@ -325,21 +346,21 @@ fn handle_selected_ship_button_drop(
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::Battleship => {
                 if ship_direction == &ShipDirection::Vertical {
                     BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
             ShipType::LargeBattleship => {
                 if ship_direction == &ShipDirection::Vertical {
                     LARGE_BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
-            },
+            }
         } / 2.0;
 
         for (_, cell_transform, _, cell, cell_side) in cells_query.iter() {
@@ -364,7 +385,9 @@ fn handle_selected_ship_button_drop(
             return;
         }
 
-        commands.entity(selected_ship_entity).remove::<SelectedShip>();
+        commands
+            .entity(selected_ship_entity)
+            .remove::<SelectedShip>();
 
         cells.sort_by(|a, b| {
             if a.row == b.row {
@@ -388,6 +411,18 @@ fn handle_selected_ship_button_drop(
         ship_transform.translation.x = final_ship_position.x;
         ship_transform.translation.y = final_ship_position.y;
         ship_transform.translation.z = final_ship_position.z;
+
+        //mudar cor do navio caso ele esteja numa posição inimiga (descomentar quando a funcionalidade do inimigo posicionar navio estiver funcionando)
+        // if let Some(last_cell) = cells.last() {
+            
+        //     let new_color = if last_cell.row >= 4 {
+        //         Color::srgb(0.6, 0.6, 1.0) // Azul claro para inimigos
+        //     } else {
+        //         Color::srgb(1.0, 1.0, 1.0) // Cor padrão (branca) para o jogador
+        //     };
+
+        //     ship_sprite.color = new_color;
+        // }
 
         for (_, _, mut cell_sprite, _, cell_side) in cells_query.iter_mut() {
             if cell_side == &CellSide::Player {

@@ -3,7 +3,15 @@ use bevy::input::{mouse::MouseButtonInput, ButtonState};
 
 pub use bevy::prelude::*;
 
+use crate::ui::components::ships::Ship;
+
 pub struct Board;
+
+//struct que vai representar o total de cliques do jogo globalmente 
+#[derive(Default, Resource)]
+pub struct ClickedCells {
+    pub cells: Vec<Entity>,
+}
 
 /**
  * criando um plugin bevy para criar o
@@ -14,6 +22,7 @@ impl Plugin for Board {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, render_board);
         app.add_systems(Update, handle_click);
+        app.insert_resource(ClickedCells::default()); //adicionando struct como recurso global do bevy
     }
 }
 
@@ -64,10 +73,12 @@ fn render_board(mut commands: Commands) {
 }
 
 fn handle_click(
-    mut query: Query<(&mut Sprite, &mut Cell, &Transform)>,
+    mut query: Query<(Entity ,&mut Sprite, &mut Cell, &Transform)>,
     mut mouse_button_input: EventReader<MouseButtonInput>,
     camera_query: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
+    mut ships_query: Query<(Entity, &mut Ship)>,
+    mut clicked_cells: ResMut<ClickedCells>,
 ) {
     for event in mouse_button_input.read() {
         if event.button == MouseButton::Left && event.state == ButtonState::Pressed {
@@ -85,7 +96,7 @@ fn handle_click(
                 return;
             };
 
-            for (mut sprite, mut cell, _) in query.iter_mut() {
+            for (entity ,mut sprite, mut cell, _) in query.iter_mut() {
                 let column = cell.column;
                 let row = cell.row;
 
@@ -102,13 +113,13 @@ fn handle_click(
                 };
 
                 if cell_area.contains(point.xy()) {
+                    
                     if cell.row > (ROWS / 2) - 1 && !cell.marked {
-                        cell.mark();
-                        sprite.color = Color::srgb(0.28, 0.28, 0.28);
+                        cell.mark(&mut sprite, &mut ships_query, entity,&mut clicked_cells.cells);
                     } else if cell.marked {
-                        println!("celula já marcada");
+                        println!("celula já marcada posicao");
                     } else {
-                        println!("não é possivel selecionar essa celula");
+                        // println!("não é possivel selecionar essa celula");
                     }
                 }
             }
