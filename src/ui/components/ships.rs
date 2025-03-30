@@ -19,7 +19,7 @@ pub enum ShipDirection {
     Vertical,
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 #[allow(dead_code)]
 pub struct Ship {
     pub r#type: ShipType,
@@ -191,13 +191,23 @@ pub fn debug_spawn_submarine(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     cells_query: Query<(Entity, &Cell)>,
-) {
+) { 
+    commands.spawn(
+        ShipBundle::new_submarine(
+            &asset_server,
+            ShipDirection::Horizontal,
+            2,
+            5,
+            &cells_query,
+        ),
+    );
+
     commands.spawn(
         ShipBundle::new_large_battleship(
             &asset_server,
             ShipDirection::Vertical,
-            1,
-            1,
+            4,
+            5,
             &cells_query,
         ),
     );

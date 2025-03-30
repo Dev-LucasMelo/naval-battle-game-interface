@@ -3,6 +3,8 @@ use bevy::input::{mouse::MouseButtonInput, ButtonState};
 
 pub use bevy::prelude::*;
 
+use crate::ui::components::ships::Ship;
+
 pub struct Board;
 
 /**
@@ -64,10 +66,11 @@ fn render_board(mut commands: Commands) {
 }
 
 fn handle_click(
-    mut query: Query<(&mut Sprite, &mut Cell, &Transform)>,
+    mut query: Query<(Entity ,&mut Sprite, &mut Cell, &Transform)>,
     mut mouse_button_input: EventReader<MouseButtonInput>,
     camera_query: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
+    ships_query: Query<(Entity, &Ship)>,
 ) {
     for event in mouse_button_input.read() {
         if event.button == MouseButton::Left && event.state == ButtonState::Pressed {
@@ -85,7 +88,7 @@ fn handle_click(
                 return;
             };
 
-            for (mut sprite, mut cell, _) in query.iter_mut() {
+            for (entity ,mut sprite, mut cell, _) in query.iter_mut() {
                 let column = cell.column;
                 let row = cell.row;
 
@@ -102,13 +105,14 @@ fn handle_click(
                 };
 
                 if cell_area.contains(point.xy()) {
+                    // println!("clicou na posicao: [{column}][{row}]");
+                    
                     if cell.row > (ROWS / 2) - 1 && !cell.marked {
-                        cell.mark();
-                        sprite.color = Color::srgb(0.28, 0.28, 0.28);
+                        cell.mark(&mut sprite, &ships_query, entity);
                     } else if cell.marked {
-                        println!("celula já marcada");
+                        println!("celula já marcada posicao");
                     } else {
-                        println!("não é possivel selecionar essa celula");
+                        // println!("não é possivel selecionar essa celula");
                     }
                 }
             }
