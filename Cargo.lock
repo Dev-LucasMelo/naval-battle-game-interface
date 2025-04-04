@@ -2692,6 +2692,7 @@ dependencies = [
  "bevy",
  "env_logger",
  "log",
+ "rand",
 ]
 
 [[package]]

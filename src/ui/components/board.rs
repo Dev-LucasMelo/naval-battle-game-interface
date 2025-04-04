@@ -1,16 +1,29 @@
 use crate::logic::cell::{Cell, CellSide};
 use bevy::input::{mouse::MouseButtonInput, ButtonState};
 
-pub use bevy::prelude::*;
-
 use crate::ui::components::ships::Ship;
+pub use bevy::prelude::*;
+use rand::prelude::SliceRandom;
 
 pub struct Board;
 
-//struct que vai representar o total de cliques do jogo globalmente 
+//struct que vai representar o total de cliques do jogo globalmente
 #[derive(Default, Resource)]
 pub struct ClickedCells {
     pub cells: Vec<Entity>,
+}
+
+#[derive(Default, Resource)]
+pub struct GameState {
+    pub is_player_turn: bool,
+}
+
+impl GameState {
+    pub fn new() -> Self {
+        GameState {
+            is_player_turn: true,
+        }
+    }
 }
 
 /**
@@ -22,7 +35,10 @@ impl Plugin for Board {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, render_board);
         app.add_systems(Update, handle_click);
+        app.add_systems(Update, bot_turn);
+
         app.insert_resource(ClickedCells::default()); //adicionando struct como recurso global do bevy
+        app.insert_resource(GameState::new());
     }
 }
 
@@ -72,13 +88,71 @@ fn render_board(mut commands: Commands) {
     }
 }
 
+fn bot_turn(
+    mut game_state: ResMut<GameState>,
+    mut query: Query<(Entity, &mut Cell, &mut Sprite)>,
+    mut _ships_query: Query<(Entity, &mut Ship)>,
+    mut clicked_cells: ResMut<ClickedCells>,
+) { 
+    if !game_state.is_player_turn {
+        println!("o bot joga agora");
+        //implementação da jogada do bot
+
+        let mut available_cells: Vec<Entity> = query
+            .iter_mut()
+            .filter(|(_, cell, _)| cell.row < (ROWS / 2) - 1 && !cell.marked) // Lado do jogador (linha maior que ROWS / 2)
+            .filter_map(|(entity, cell, _)| {
+                if !cell.marked {
+                    Some(entity)
+                } else {
+                    None
+                } 
+            })
+            .collect();
+
+        let mut rng = rand::thread_rng();
+        available_cells.shuffle(&mut rng);
+
+        if let Some(target_entity) = available_cells.first() {
+            println!("O bot atacou a célula {:?}", target_entity);
+
+            // println!(""); 
+
+            
+            for (entity, _, mut sprite) in query.iter_mut() {
+                if entity == *target_entity {
+                    // Muda a cor da célula para indicar um acerto
+                    sprite.color = Color::srgb(1.0, 0.0, 0.0); // Cor vermelha, ou qualquer outra que preferir
+                    break;
+                }
+
+                //verificar se a entity cell está contida no navio 
+
+
+            }
+
+            //funcionalidade identificar navios afundados pelo bot (contabilizar pontos)
+
+            // ideia : 
+            // capturar os navios da função de drop e inserir em um resource e validar aqui se o bot acertou todas as 
+            // celulas dos navios instanciados
+        
+            
+        }
+
+        //passa a vez para o jogador
+        game_state.is_player_turn = true;
+    }
+}
+
 fn handle_click(
-    mut query: Query<(Entity ,&mut Sprite, &mut Cell, &Transform)>,
+    mut query: Query<(Entity, &mut Sprite, &mut Cell, &Transform)>,
     mut mouse_button_input: EventReader<MouseButtonInput>,
     camera_query: Single<(&Camera, &GlobalTransform)>,
     windows: Query<&Window>,
     mut ships_query: Query<(Entity, &mut Ship)>,
     mut clicked_cells: ResMut<ClickedCells>,
+    mut game_state: ResMut<GameState>,
 ) {
     for event in mouse_button_input.read() {
         if event.button == MouseButton::Left && event.state == ButtonState::Pressed {
@@ -96,7 +170,7 @@ fn handle_click(
                 return;
             };
 
-            for (entity ,mut sprite, mut cell, _) in query.iter_mut() {
+            for (entity, mut sprite, mut cell, _) in query.iter_mut() {
                 let column = cell.column;
                 let row = cell.row;
 
@@ -113,9 +187,15 @@ fn handle_click(
                 };
 
                 if cell_area.contains(point.xy()) {
-                    
                     if cell.row > (ROWS / 2) - 1 && !cell.marked {
-                        cell.mark(&mut sprite, &mut ships_query, entity,&mut clicked_cells.cells);
+                        cell.mark(
+                            &mut sprite,
+                            &mut ships_query,
+                            entity,
+                            &mut clicked_cells.cells,
+                        );
+
+                        game_state.is_player_turn = false;
                     } else if cell.marked {
                         println!("celula já marcada posicao");
                     } else {
