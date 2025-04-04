@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::logic::cell::Cell;
 
-use super::board::{COLUMNS, ROWS, SLOT_SIZE, SLOT_SPACE_BETWEEN};
+use super::board::{COLUMNS, ROWS, SLOT_SIZE, SLOT_SPACE_BETWEEN, GameState};
 
 #[derive(Component, Clone, PartialEq, Debug)]
 #[allow(dead_code)]
@@ -218,22 +218,26 @@ pub fn debug_spawn_submarine(
     asset_server: Res<AssetServer>,
     cells_query: Query<(Entity, &Cell)>,
 ) { 
-    commands.spawn(
-        ShipBundle::new_submarine(
-            &asset_server,
-            ShipDirection::Horizontal,
-            2,
-            5,
-            &cells_query,
-        ),
-    );
 
+
+    //peça do bot
     commands.spawn(
         ShipBundle::new_large_battleship(
             &asset_server,
             ShipDirection::Vertical,
             4,
             5,
+            &cells_query,
+        ),
+    );
+
+    //peça do jogador
+    commands.spawn(
+        ShipBundle::new_large_battleship(
+            &asset_server,
+            ShipDirection::Horizontal,
+            4,
+            2,
             &cells_query,
         ),
     );

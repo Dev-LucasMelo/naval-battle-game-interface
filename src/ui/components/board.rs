@@ -10,7 +10,7 @@ pub struct Board;
 //struct que vai representar o total de cliques do jogo globalmente
 #[derive(Default, Resource)]
 pub struct ClickedCells {
-    pub cells: Vec<Entity>,
+    pub cells: Vec<Entity>, 
 }
 
 #[derive(Default, Resource)]
@@ -91,22 +91,20 @@ fn render_board(mut commands: Commands) {
 fn bot_turn(
     mut game_state: ResMut<GameState>,
     mut query: Query<(Entity, &mut Cell, &mut Sprite)>,
-    mut _ships_query: Query<(Entity, &mut Ship)>,
+    mut ships_query: Query<(Entity, &mut Ship)>,
     mut clicked_cells: ResMut<ClickedCells>,
-) { 
+) {
     if !game_state.is_player_turn {
-        println!("o bot joga agora");
-        //implementação da jogada do bot
-
         let mut available_cells: Vec<Entity> = query
             .iter_mut()
-            .filter(|(_, cell, _)| cell.row < (ROWS / 2) - 1 && !cell.marked) // Lado do jogador (linha maior que ROWS / 2)
+            .filter(|(_, cell, _)| cell.row < (ROWS / 2) && !cell.marked) // Lado do jogador (linha maior que ROWS / 2)
             .filter_map(|(entity, cell, _)| {
-                if !cell.marked {
+                if !cell.marked && !clicked_cells.cells.contains(&entity) {
+                    //fazendo com que o bot não escolha celulas já clicadas
                     Some(entity)
                 } else {
                     None
-                } 
+                }
             })
             .collect();
 
@@ -114,34 +112,20 @@ fn bot_turn(
         available_cells.shuffle(&mut rng);
 
         if let Some(target_entity) = available_cells.first() {
-            println!("O bot atacou a célula {:?}", target_entity);
-
-            // println!(""); 
-
-            
-            for (entity, _, mut sprite) in query.iter_mut() {
+            for (entity, mut cell, mut sprite) in query.iter_mut() {
                 if entity == *target_entity {
-                    // Muda a cor da célula para indicar um acerto
-                    sprite.color = Color::srgb(1.0, 0.0, 0.0); // Cor vermelha, ou qualquer outra que preferir
+                    cell.mark(
+                        &mut sprite,
+                        &mut ships_query,
+                        entity,
+                        &mut clicked_cells.cells,
+                        &mut game_state,
+                    );
+
                     break;
                 }
-
-                //verificar se a entity cell está contida no navio 
-
-
             }
-
-            //funcionalidade identificar navios afundados pelo bot (contabilizar pontos)
-
-            // ideia : 
-            // capturar os navios da função de drop e inserir em um resource e validar aqui se o bot acertou todas as 
-            // celulas dos navios instanciados
-        
-            
         }
-
-        //passa a vez para o jogador
-        game_state.is_player_turn = true;
     }
 }
 
@@ -154,52 +138,54 @@ fn handle_click(
     mut clicked_cells: ResMut<ClickedCells>,
     mut game_state: ResMut<GameState>,
 ) {
-    for event in mouse_button_input.read() {
-        if event.button == MouseButton::Left && event.state == ButtonState::Pressed {
-            let (camera, camera_transform) = *camera_query;
+    if game_state.is_player_turn {
+        for event in mouse_button_input.read() {
+            if event.button == MouseButton::Left && event.state == ButtonState::Pressed {
+                let (camera, camera_transform) = *camera_query;
 
-            let Ok(window) = windows.get_single() else {
-                return;
-            };
-
-            let Some(cursor_position) = window.cursor_position() else {
-                return;
-            };
-
-            let Ok(point) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
-                return;
-            };
-
-            for (entity, mut sprite, mut cell, _) in query.iter_mut() {
-                let column = cell.column;
-                let row = cell.row;
-
-                // Cálculo da posição da célula no tabuleiro
-                let x = (column as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
-                    - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0);
-                let y = (row as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
-                    - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0);
-
-                // area da celula (precisa refinar)
-                let cell_area = Rect {
-                    min: Vec2::new(x - SLOT_SIZE / 2.0, y - SLOT_SIZE / 2.0),
-                    max: Vec2::new(x + SLOT_SIZE / 2.0, y + SLOT_SIZE / 2.0),
+                let Ok(window) = windows.get_single() else {
+                    return;
                 };
 
-                if cell_area.contains(point.xy()) {
-                    if cell.row > (ROWS / 2) - 1 && !cell.marked {
-                        cell.mark(
-                            &mut sprite,
-                            &mut ships_query,
-                            entity,
-                            &mut clicked_cells.cells,
-                        );
+                let Some(cursor_position) = window.cursor_position() else {
+                    return;
+                };
 
-                        game_state.is_player_turn = false;
-                    } else if cell.marked {
-                        println!("celula já marcada posicao");
-                    } else {
-                        // println!("não é possivel selecionar essa celula");
+                let Ok(point) = camera.viewport_to_world_2d(camera_transform, cursor_position)
+                else {
+                    return;
+                };
+
+                for (entity, mut sprite, mut cell, _) in query.iter_mut() {
+                    let column = cell.column;
+                    let row = cell.row;
+
+                    // Cálculo da posição da célula no tabuleiro
+                    let x = (column as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                        - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0);
+                    let y = (row as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                        - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0);
+
+                    // area da celula (precisa refinar)
+                    let cell_area = Rect {
+                        min: Vec2::new(x - SLOT_SIZE / 2.0, y - SLOT_SIZE / 2.0),
+                        max: Vec2::new(x + SLOT_SIZE / 2.0, y + SLOT_SIZE / 2.0),
+                    };
+
+                    if cell_area.contains(point.xy()) {
+                        if cell.row > (ROWS / 2) - 1 && !cell.marked {
+                            cell.mark(
+                                &mut sprite,
+                                &mut ships_query,
+                                entity,
+                                &mut clicked_cells.cells,
+                                &mut game_state,
+                            );
+                        } else if cell.marked {
+                            println!("celula já marcada posicao");
+                        } else {
+                            // println!("não é possivel selecionar essa celula");
+                        }
                     }
                 }
             }
