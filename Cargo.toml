@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.15"}
+rand = "0.8"
 env_logger = "0.9"
 log = "0.4"
 

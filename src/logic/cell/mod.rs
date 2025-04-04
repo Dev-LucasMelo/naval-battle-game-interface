@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::ui::components::ships::Ship;
+use crate::ui::components::{board::GameState, ships::Ship};
 
 #[derive(Component, Debug)]
 pub struct Cell {
@@ -22,6 +22,7 @@ impl Cell {
         ships_query: &mut Query<(Entity, &mut Ship)>,
         entity_alvo: Entity,
         clicked_cells: &mut Vec<Entity>, //referencia do vetor de celulas clicadas
+        game_state: &mut ResMut<GameState>
     ) {
         clicked_cells.push(entity_alvo);
 
@@ -33,21 +34,27 @@ impl Cell {
                 validator = true;
                 let all_cells_clicked = ship.cells.iter().all(|cell| clicked_cells.contains(cell));
 
-                if all_cells_clicked {
+                if all_cells_clicked && game_state.is_player_turn {
+                    println!("o jogador afundou algum navio");
+                    ship.sunk = true;
+                } else if all_cells_clicked && !game_state.is_player_turn {
+                    println!("o bot afundou algum navio");
                     ship.sunk = true;
                 }
 
                 break;
             }
-        
         }
 
-        if validator {
-            sprite.color = Color::srgb(0.255, 0.0, 0.0);
+        if validator && game_state.is_player_turn { //se o jogador acertar
+            sprite.color = Color::srgb(0.0, 1.0, 0.0); 
+        } else if validator && !game_state.is_player_turn { // se o bot acertar
+            sprite.color = Color::srgb(1.0, 0.0, 0.0); 
         } else {
             sprite.color = Color::srgb(0.28, 0.28, 0.28);
         }
 
+        game_state.is_player_turn = !game_state.is_player_turn; //alternar jogada 
         self.marked = true;
     }
 }
