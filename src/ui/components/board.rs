@@ -13,15 +13,23 @@ pub struct ClickedCells {
     pub cells: Vec<Entity>, 
 }
 
-#[derive(Default, Resource)]
+#[derive(Default, Resource, Debug)]
 pub struct GameState {
     pub is_player_turn: bool,
+    pub total_ships_bot: i32, //quantidade de navios ativos no jogo
+    pub total_ships_player: i32, //quantidade de navios ativos no jogo
+    pub bot_score: i32,
+    pub player_score: i32
 }
 
 impl GameState {
     pub fn new() -> Self {
         GameState {
             is_player_turn: true,
+            bot_score: 0,
+            player_score: 0,
+            total_ships_bot: 0,
+            total_ships_player: 0
         }
     }
 }
@@ -70,7 +78,7 @@ fn render_board(mut commands: Commands) {
                     ..Default::default()
                 },
                 Transform {
-                    translation: Vec3::new(x, y, Vec3::default().z),
+                    translation: Vec3::new(x, y, Vec3::default().z - 1.0),
                     ..Default::default()
                 },
                 Cell {

@@ -6,7 +6,7 @@ use bevy::{
 use crate::logic::cell::{Cell, CellSide};
 
 use super::{
-    board::{PLAYER_CELL_COLOR, SLOT_SIZE, SLOT_SPACE_BETWEEN},
+    board::{GameState, PLAYER_CELL_COLOR, SLOT_SIZE, SLOT_SPACE_BETWEEN},
     ships::{
         ShipBundle, ShipDirection, ShipType, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE,
     },
@@ -127,6 +127,7 @@ fn handle_ship_selection_button_drag(
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
     cells_query: Query<(Entity, &Cell)>,
     selected_ship_query: Query<Entity, With<SelectedShip>>,
+    mut game_state: ResMut<GameState>
 ) {
     for (_, interaction, ship_option, mut transform) in interaction_query.iter_mut() {
         match *interaction {
@@ -151,6 +152,7 @@ fn handle_ship_selection_button_drag(
                             0,
                             0,
                             &cells_query,
+                            &mut game_state
                         ),
                         ShipType::Battleship => ShipBundle::new_battleship(
                             &asset_server,
@@ -158,6 +160,7 @@ fn handle_ship_selection_button_drag(
                             0,
                             0,
                             &cells_query,
+                            &mut game_state
                         ),
                         ShipType::LargeBattleship => ShipBundle::new_large_battleship(
                             &asset_server,
@@ -165,6 +168,7 @@ fn handle_ship_selection_button_drag(
                             0,
                             0,
                             &cells_query,
+                            &mut game_state
                         ),
                     },
                 ));

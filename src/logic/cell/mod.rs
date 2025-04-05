@@ -35,10 +35,10 @@ impl Cell {
                 let all_cells_clicked = ship.cells.iter().all(|cell| clicked_cells.contains(cell));
 
                 if all_cells_clicked && game_state.is_player_turn {
-                    println!("o jogador afundou algum navio");
+                    game_state.player_score += 1;
                     ship.sunk = true;
                 } else if all_cells_clicked && !game_state.is_player_turn {
-                    println!("o bot afundou algum navio");
+                    game_state.bot_score += 1;
                     ship.sunk = true;
                 }
 
@@ -54,7 +54,14 @@ impl Cell {
             sprite.color = Color::srgb(0.28, 0.28, 0.28);
         }
 
+        //validar fim de game no clique usando a struct de estado do jogo
+        println!("estado do jogo: ");
+        println!("{:#?}",game_state);
+
+
         game_state.is_player_turn = !game_state.is_player_turn; //alternar jogada 
+
+
         self.marked = true;
     }
 }

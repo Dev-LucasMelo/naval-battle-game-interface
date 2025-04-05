@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::logic::cell::Cell;
 
-use super::board::{COLUMNS, ROWS, SLOT_SIZE, SLOT_SPACE_BETWEEN, GameState};
+use super::board::{GameState, COLUMNS, ROWS, SLOT_SIZE, SLOT_SPACE_BETWEEN};
 
 #[derive(Component, Clone, PartialEq, Debug)]
 #[allow(dead_code)]
@@ -48,12 +48,14 @@ impl ShipBundle {
         x: i8,
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
+        game_state: &mut ResMut<GameState>,
     ) -> ShipBundle {
-
-        let color = if y > 4 {  // Posição y maior ou igual a 0 (parte superior - inimigo)
-            Color::srgba(1.0, 1.0, 1.0,0.0) // Azul claro para inimigos
+        let color = if y > 4 {
+            game_state.total_ships_bot += 1;
+            Color::srgba(1.0, 1.0, 1.0, 0.0) // Azul claro para inimigos
         } else {
-            Color::srgba(1.0, 1.0, 1.0,1.0) // Cor padrão para o jogador
+            game_state.total_ships_player += 1;
+            Color::srgba(1.0, 1.0, 1.0, 1.0) // Cor padrão para o jogador
         };
 
         ShipBundle {
@@ -77,9 +79,7 @@ impl ShipBundle {
                 color,
                 ..Default::default()
             },
-            
         }
-       
     }
 
     pub fn new_battleship(
@@ -88,12 +88,14 @@ impl ShipBundle {
         x: i8,
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
+        game_state: &mut ResMut<GameState>,
     ) -> ShipBundle {
-
-        let color = if y > 4 {  // Posição y maior ou igual a 0 (parte superior - inimigo)
-            Color::srgba(1.0, 1.0, 1.0,0.0) // Azul claro para inimigos
+        let color = if y > 4 {
+            game_state.total_ships_bot += 1;
+            Color::srgba(1.0, 1.0, 1.0, 0.0) // Azul claro para inimigos
         } else {
-            Color::srgba(1.0, 1.0, 1.0,1.0) // Cor padrão para o jogador
+            game_state.total_ships_player += 1;
+            Color::srgba(1.0, 1.0, 1.0, 1.0) // Cor padrão para o jogador
         };
 
         ShipBundle {
@@ -126,23 +128,37 @@ impl ShipBundle {
         x: i8,
         y: i8,
         cells_query: &Query<(Entity, &Cell)>,
+        game_state: &mut ResMut<GameState>,
     ) -> ShipBundle {
 
-        let color = if y > 4 {  // Posição y maior ou igual a 0 (parte superior - inimigo)
-            Color::srgba(1.0, 1.0, 1.0,0.0) // Azul claro para inimigos
+        let color = if y > 4 {
+            game_state.total_ships_bot += 1;
+            Color::srgba(1.0, 1.0, 1.0, 0.0) // Azul claro para inimigos
         } else {
-            Color::srgba(1.0, 1.0, 1.0,1.0) // Cor padrão para o jogador
+            game_state.total_ships_player += 1;
+            Color::srgba(1.0, 1.0, 1.0, 1.0) // Cor padrão para o jogador
         };
 
         ShipBundle {
             ship: Ship {
                 r#type: ShipType::LargeBattleship,
-                cells: Self::find_cells_for_ship(x, y, LARGE_BATTLESHIP_SIZE, &direction, &cells_query),
+                cells: Self::find_cells_for_ship(
+                    x,
+                    y,
+                    LARGE_BATTLESHIP_SIZE,
+                    &direction,
+                    &cells_query,
+                ),
                 sunk: false,
             },
             direction: direction.clone(),
             transform: Transform {
-                translation: ShipBundle::calculate_position(LARGE_BATTLESHIP_SIZE, &direction, x, y),
+                translation: ShipBundle::calculate_position(
+                    LARGE_BATTLESHIP_SIZE,
+                    &direction,
+                    x,
+                    y,
+                ),
                 rotation: match direction {
                     ShipDirection::Horizontal => Quat::from_rotation_z(0.0),
                     ShipDirection::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
@@ -150,7 +166,10 @@ impl ShipBundle {
                 ..Default::default()
             },
             sprite: Sprite {
-                custom_size: Some(Vec2::new(LARGE_BATTLESHIP_SIZE as f32 * SLOT_SIZE, SLOT_SIZE)),
+                custom_size: Some(Vec2::new(
+                    LARGE_BATTLESHIP_SIZE as f32 * SLOT_SIZE,
+                    SLOT_SIZE,
+                )),
                 image: asset_server.load("atlases/large_battleship.png"),
                 color,
                 ..Default::default()
@@ -158,33 +177,28 @@ impl ShipBundle {
         }
     }
 
-    pub fn calculate_position(
-        ship_size: usize,
-        direction: &ShipDirection,
-        x: i8,
-        y: i8,
-    ) -> Vec3 {
+    pub fn calculate_position(ship_size: usize, direction: &ShipDirection, x: i8, y: i8) -> Vec3 {
         let x = x as f32;
         let y = y as f32;
 
         Vec3::new(
             if ship_size % 2 == 0 && direction == &ShipDirection::Horizontal {
                 (x as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
-                - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
-                + (SLOT_SIZE * 1.5)
+                    - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
+                    + (SLOT_SIZE * 1.5)
             } else {
                 (x as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
-                - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
+                    - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
             },
             if ship_size % 2 == 0 && direction == &ShipDirection::Vertical {
                 (y as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
-                - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
-                + (SLOT_SIZE * 1.5)
+                    - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
+                    + (SLOT_SIZE * 1.5)
             } else {
                 (y as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
-                - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
+                    - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
             },
-            4.0,
+            Vec3::default().z + 1.0,
         )
     }
 
@@ -193,13 +207,21 @@ impl ShipBundle {
         y: i8,
         ship_size: usize,
         direction: &ShipDirection,
-        cells_query: &Query<(Entity, &Cell)>
+        cells_query: &Query<(Entity, &Cell)>,
     ) -> Vec<Entity> {
         let mut cells = Vec::new();
 
         for i in 0..ship_size {
-            let target_x = if *direction == ShipDirection::Horizontal { x + i as i8 } else { x };
-            let target_y = if *direction == ShipDirection::Vertical { y + i as i8 } else { y };
+            let target_x = if *direction == ShipDirection::Horizontal {
+                x + i as i8
+            } else {
+                x
+            };
+            let target_y = if *direction == ShipDirection::Vertical {
+                y + i as i8
+            } else {
+                y
+            };
 
             if let Some((entity, _)) = cells_query
                 .iter()
@@ -217,37 +239,70 @@ pub fn debug_spawn_submarine(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     cells_query: Query<(Entity, &Cell)>,
-) { 
-
-
+    mut game_state: ResMut<GameState>,
+) {
     //peça do bot
-    commands.spawn(
-        ShipBundle::new_large_battleship(
-            &asset_server,
-            ShipDirection::Vertical,
-            4,
-            5,
-            &cells_query,
-        ),
-    );
+    commands.spawn(ShipBundle::new_large_battleship(
+        &asset_server,
+        ShipDirection::Vertical,
+        4,
+        5,
+        &cells_query,
+        &mut game_state,
+    ));
+
+    commands.spawn(ShipBundle::new_battleship(
+        &asset_server,
+        ShipDirection::Vertical,
+        6,
+        5,
+        &cells_query,
+        &mut game_state,
+    ));
+
+    commands.spawn(ShipBundle::new_submarine(
+        &asset_server,
+        ShipDirection::Vertical,
+        9,
+        7,
+        &cells_query,
+        &mut game_state,
+    ));
 
     //peça do jogador
-    commands.spawn(
-        ShipBundle::new_large_battleship(
-            &asset_server,
-            ShipDirection::Horizontal,
-            4,
-            2,
-            &cells_query,
-        ),
-    );
+    commands.spawn(ShipBundle::new_large_battleship(
+        &asset_server,
+        ShipDirection::Horizontal,
+        9,
+        2,
+        &cells_query,
+        &mut game_state,
+    ));
+
+    commands.spawn(ShipBundle::new_battleship(
+        &asset_server,
+        ShipDirection::Horizontal,
+        4,
+        1,
+        &cells_query,
+        &mut game_state,
+    ));
+
+    commands.spawn(ShipBundle::new_submarine(
+        &asset_server,
+        ShipDirection::Horizontal,
+        7,
+        3,
+        &cells_query,
+        &mut game_state,
+    ));
+
+
 }
 
 // função que vai escutar a mudança de sunk e vai fazer algo a partir disso
-pub fn check_sunk_change(
-    mut query: Query<(&mut Ship, &mut Sprite)>,
-) {
-    for (ship,mut sprite) in query.iter_mut() {
+pub fn check_sunk_change(mut query: Query<(&mut Ship, &mut Sprite)>) {
+    for (ship, mut sprite) in query.iter_mut() {
         if ship.sunk {
             sprite.color = Color::srgba(1.0, 1.0, 1.0, 1.0);
         }
