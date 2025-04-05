@@ -1,5 +1,5 @@
 use crate::logic::cell::{Cell, CellSide};
-use bevy::input::{mouse::MouseButtonInput, ButtonState};
+use bevy::{input::{mouse::MouseButtonInput, ButtonState}, text::TextBounds};
 
 use crate::ui::components::ships::Ship;
 pub use bevy::prelude::*;
@@ -10,18 +10,28 @@ pub struct Board;
 //struct que vai representar o total de cliques do jogo globalmente
 #[derive(Default, Resource)]
 pub struct ClickedCells {
-    pub cells: Vec<Entity>, 
+    pub cells: Vec<Entity>,
 }
 
-#[derive(Default, Resource)]
+#[derive(Default, Resource, Debug)]
 pub struct GameState {
     pub is_player_turn: bool,
+    pub total_ships_bot: i32,    //quantidade de navios ativos no jogo
+    pub total_ships_player: i32, //quantidade de navios ativos no jogo
+    pub bot_score: i32,
+    pub player_score: i32,
+    pub winner: Option<i32>,
 }
 
 impl GameState {
     pub fn new() -> Self {
         GameState {
             is_player_turn: true,
+            bot_score: 0,
+            player_score: 0,
+            total_ships_bot: 0,
+            total_ships_player: 0,
+            winner: None,
         }
     }
 }
@@ -36,6 +46,7 @@ impl Plugin for Board {
         app.add_systems(Startup, render_board);
         app.add_systems(Update, handle_click);
         app.add_systems(Update, bot_turn);
+        app.add_systems(Update, show_victory_screen);
 
         app.insert_resource(ClickedCells::default()); //adicionando struct como recurso global do bevy
         app.insert_resource(GameState::new());
@@ -70,7 +81,7 @@ fn render_board(mut commands: Commands) {
                     ..Default::default()
                 },
                 Transform {
-                    translation: Vec3::new(x, y, Vec3::default().z),
+                    translation: Vec3::new(x, y, Vec3::default().z - 1.0),
                     ..Default::default()
                 },
                 Cell {
@@ -190,5 +201,65 @@ fn handle_click(
                 }
             }
         }
+    }
+}
+
+fn show_victory_screen(
+    game_state: ResMut<GameState>,
+    mut commands: Commands,
+    ships_query: Query<(Entity, &mut Ship)>,
+    cells_query: Query<(Entity, &mut Cell)>,
+) {
+    if game_state.winner.is_some() {
+        let winner = game_state.winner.unwrap();
+
+        // apagar navios
+        for (entity, _ship) in ships_query.iter() {
+            commands.entity(entity).despawn(); //fecha programa
+        }
+
+        // apagar celulas
+        for (entity, _ship) in cells_query.iter() {
+            commands.entity(entity).despawn(); //fecha programa
+        }
+
+        //limpar painel
+        //mudar visibilidade do painel
+
+
+        let alvo = if winner == 0 {
+            "jogador"
+        } else {
+            "Bot"
+        };
+
+        let textofinal  = format!("vencedor: {alvo}"); 
+
+        let box_size = Vec2::new(400.0, 100.0);
+        let box_position = Vec2::new(0.0, 100.0);
+        let slightly_smaller_text_font = TextFont {
+            font_size: 25.0,
+            ..default()
+        };
+
+        commands
+            .spawn((
+                Sprite::from_color(Color::srgb(0.25, 0.25, 0.75), box_size),
+                Transform::from_translation(box_position.extend(0.0)),
+            ))
+            .with_children(|builder| {
+                builder.spawn((
+                    Text2d::new(textofinal),
+                    slightly_smaller_text_font.clone(),
+                    TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
+                    // Wrap text in the rectangle
+                    TextBounds::from(box_size),
+                    // ensure the text is drawn on top of the box
+                    Transform::from_translation(Vec3::Z),
+                ));
+            });
+
+
+
     }
 }
