@@ -22,14 +22,14 @@ impl Cell {
         ships_query: &mut Query<(Entity, &mut Ship)>,
         entity_alvo: Entity,
         clicked_cells: &mut Vec<Entity>, //referencia do vetor de celulas clicadas
-        game_state: &mut ResMut<GameState>
+        game_state: &mut ResMut<GameState>,
+        
     ) {
         clicked_cells.push(entity_alvo);
 
         let mut validator: bool = false;
-        
-        for (_entity,mut ship) in ships_query.iter_mut() {
-        
+
+        for (_entity, mut ship) in ships_query.iter_mut() {
             if ship.cells.contains(&entity_alvo) {
                 validator = true;
                 let all_cells_clicked = ship.cells.iter().all(|cell| clicked_cells.contains(cell));
@@ -46,22 +46,26 @@ impl Cell {
             }
         }
 
-        if validator && game_state.is_player_turn { //se o jogador acertar
-            sprite.color = Color::srgb(0.0, 1.0, 0.0); 
-        } else if validator && !game_state.is_player_turn { // se o bot acertar
-            sprite.color = Color::srgb(1.0, 0.0, 0.0); 
+        if validator && game_state.is_player_turn {
+            //se o jogador acertar
+            sprite.color = Color::srgb(0.0, 1.0, 0.0);
+        } else if validator && !game_state.is_player_turn {
+            // se o bot acertar
+            sprite.color = Color::srgb(1.0, 0.0, 0.0);
         } else {
             sprite.color = Color::srgb(0.28, 0.28, 0.28);
         }
 
-        //validar fim de game no clique usando a struct de estado do jogo
-        println!("estado do jogo: ");
-        println!("{:#?}",game_state);
+        //validar fim de game
+        if game_state.total_ships_bot == game_state.player_score {
+            //jogador ganha
+            game_state.winner = Some(0);
+        } else if game_state.total_ships_player == game_state.bot_score {
+            //bot ganha
+            game_state.winner = Some(1);
+        }
 
-
-        game_state.is_player_turn = !game_state.is_player_turn; //alternar jogada 
-
-
+        game_state.is_player_turn = !game_state.is_player_turn; //alternar jogada
         self.marked = true;
     }
 }

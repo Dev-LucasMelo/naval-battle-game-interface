@@ -29,7 +29,7 @@ pub struct SelectedShip(pub ShipType);
 #[allow(dead_code)]
 impl Plugin for ShipSelectionPanel {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_ship_selection_panel)
+        app.add_systems(Update, setup_ship_selection_panel)
             .add_systems(
                 Update,
                 (
@@ -47,7 +47,7 @@ const OPTIONS_BORDER_RADIUS: f32 = 8.0;
 const OPTIONS_BORDER_WIDTH: f32 = 2.0;
 
 #[derive(Bundle)]
-struct OptionButtonUI {
+pub struct OptionButtonUI {
     button: Button,
     node: Node,
     border_radius: BorderRadius,
@@ -72,7 +72,14 @@ impl OptionButtonUI {
     }
 }
 
-fn setup_ship_selection_panel(assert_server: Res<AssetServer>, mut commands: Commands) {
+
+
+fn setup_ship_selection_panel(
+    assert_server: Res<AssetServer>,
+    mut commands: Commands,
+) {
+   
+
     commands
         .spawn(Node {
             position_type: PositionType::Absolute,
@@ -127,7 +134,7 @@ fn handle_ship_selection_button_drag(
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
     cells_query: Query<(Entity, &Cell)>,
     selected_ship_query: Query<Entity, With<SelectedShip>>,
-    mut game_state: ResMut<GameState>
+    mut game_state: ResMut<GameState>,
 ) {
     for (_, interaction, ship_option, mut transform) in interaction_query.iter_mut() {
         match *interaction {
@@ -152,7 +159,7 @@ fn handle_ship_selection_button_drag(
                             0,
                             0,
                             &cells_query,
-                            &mut game_state
+                            &mut game_state,
                         ),
                         ShipType::Battleship => ShipBundle::new_battleship(
                             &asset_server,
@@ -160,7 +167,7 @@ fn handle_ship_selection_button_drag(
                             0,
                             0,
                             &cells_query,
-                            &mut game_state
+                            &mut game_state,
                         ),
                         ShipType::LargeBattleship => ShipBundle::new_large_battleship(
                             &asset_server,
@@ -168,7 +175,7 @@ fn handle_ship_selection_button_drag(
                             0,
                             0,
                             &cells_query,
-                            &mut game_state
+                            &mut game_state,
                         ),
                     },
                 ));
@@ -418,7 +425,7 @@ fn handle_selected_ship_button_drop(
 
         //mudar cor do navio caso ele esteja numa posição inimiga (descomentar quando a funcionalidade do inimigo posicionar navio estiver funcionando)
         // if let Some(last_cell) = cells.last() {
-            
+
         //     let new_color = if last_cell.row >= 4 {
         //         Color::srgb(0.6, 0.6, 1.0) // Azul claro para inimigos
         //     } else {

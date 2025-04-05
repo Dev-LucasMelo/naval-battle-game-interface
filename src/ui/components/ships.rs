@@ -183,19 +183,19 @@ impl ShipBundle {
 
         Vec3::new(
             if ship_size % 2 == 0 && direction == &ShipDirection::Horizontal {
-                (x as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
                     + (SLOT_SIZE * 1.5)
             } else {
-                (x as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
             },
             if ship_size % 2 == 0 && direction == &ShipDirection::Vertical {
-                (y as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                (y) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
                     + (SLOT_SIZE * 1.5)
             } else {
-                (y as f32) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                (y) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (COLUMNS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
             },
             Vec3::default().z + 1.0,
@@ -251,14 +251,14 @@ pub fn debug_spawn_submarine(
         &mut game_state,
     ));
 
-    commands.spawn(ShipBundle::new_battleship(
-        &asset_server,
-        ShipDirection::Vertical,
-        6,
-        5,
-        &cells_query,
-        &mut game_state,
-    ));
+    // commands.spawn(ShipBundle::new_battleship(
+    //     &asset_server,
+    //     ShipDirection::Vertical,
+    //     6,
+    //     6,
+    //     &cells_query,
+    //     &mut game_state,
+    // ));
 
     commands.spawn(ShipBundle::new_submarine(
         &asset_server,
@@ -272,21 +272,21 @@ pub fn debug_spawn_submarine(
     //peça do jogador
     commands.spawn(ShipBundle::new_large_battleship(
         &asset_server,
-        ShipDirection::Horizontal,
+        ShipDirection::Vertical,
         9,
-        2,
-        &cells_query,
-        &mut game_state,
-    ));
-
-    commands.spawn(ShipBundle::new_battleship(
-        &asset_server,
-        ShipDirection::Horizontal,
-        4,
         1,
         &cells_query,
         &mut game_state,
     ));
+
+    // commands.spawn(ShipBundle::new_battleship(
+    //     &asset_server,
+    //     ShipDirection::Horizontal,
+    //     4,
+    //     1,
+    //     &cells_query,
+    //     &mut game_state,
+    // ));
 
     commands.spawn(ShipBundle::new_submarine(
         &asset_server,
