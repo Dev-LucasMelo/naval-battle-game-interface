@@ -8,7 +8,7 @@ use crate::logic::cell::{Cell, CellSide};
 use super::{
     board::{GameState, PLAYER_CELL_COLOR, SLOT_SIZE, SLOT_SPACE_BETWEEN},
     ships::{
-        ShipBundle, ShipDirection, ShipType, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE,
+        Ship, ShipBundle, ShipDirection, ShipType, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE
     },
 };
 
@@ -78,7 +78,7 @@ fn setup_ship_selection_panel(
     assert_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-   
+
 
     commands
         .spawn(Node {
@@ -288,12 +288,12 @@ fn handle_selected_ship_button_drop(
     mut selected_ship_query: Query<
         (
             Entity,
+            &mut Ship,
             &SelectedShip,
             &ShipDirection,
             &mut Transform,
             &mut Sprite,
         ),
-        With<SelectedShip>,
     >,
     mut cells_query: Query<
         (Entity, &Transform, &mut Sprite, &Cell, &CellSide),
@@ -312,6 +312,7 @@ fn handle_selected_ship_button_drop(
 
     let Ok((
         selected_ship_entity,
+        mut ship,
         selected_ship,
         ship_direction,
         mut ship_transform,
@@ -422,6 +423,12 @@ fn handle_selected_ship_button_drop(
         ship_transform.translation.x = final_ship_position.x;
         ship_transform.translation.y = final_ship_position.y;
         ship_transform.translation.z = final_ship_position.z;
+
+        ship.cells = cells_query
+            .iter()
+            .filter(|(_, _, _, cell, _)| cells.iter().any(|c| c.column == cell.column && c.row == cell.row))
+            .map(|(entity, _, _, _, _)| entity)
+            .collect();
 
         //mudar cor do navio caso ele esteja numa posição inimiga (descomentar quando a funcionalidade do inimigo posicionar navio estiver funcionando)
         // if let Some(last_cell) = cells.last() {
