@@ -8,7 +8,7 @@ use crate::logic::cell::{Cell, CellSide};
 use super::{
     board::{GameState, PLAYER_CELL_COLOR, SLOT_SIZE, SLOT_SPACE_BETWEEN},
     ships::{
-        Ship, ShipBundle, ShipDirection, ShipType, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE
+        Ship, ShipBundle, ShipDirection, ShipType, AIRCRAFT_CARRIER_SIZE, BATTLESHIP_SIZE, LARGE_BATTLESHIP_SIZE, SUBMARINE_SIZE
     },
 };
 
@@ -60,7 +60,7 @@ impl OptionButtonUI {
         OptionButtonUI {
             button: Button,
             node: Node {
-                width: Val::Px(SLOT_SIZE * LARGE_BATTLESHIP_SIZE as f32),
+                width: Val::Px(SLOT_SIZE * AIRCRAFT_CARRIER_SIZE as f32),
                 height: Val::Px(SLOT_SIZE),
                 border: UiRect::all(Val::Px(OPTIONS_BORDER_WIDTH)),
                 ..Default::default()
@@ -119,6 +119,16 @@ fn setup_ship_selection_panel(
                         assert_server.load("atlases/large_battleship.png"),
                     ));
                 });
+            parent
+                .spawn(OptionButtonUI::new())
+                .insert(ShipOption {
+                    ship_type: ShipType::AircraftCarrier,
+                })
+                .with_children(|parent| {
+                    parent.spawn(ImageNode::new(
+                        assert_server.load("atlases/aircraft_carrier.png"),
+                    ));
+                });
         });
 }
 
@@ -168,6 +178,14 @@ fn handle_ship_selection_button_drag(
                             &mut game_state,
                         ),
                         ShipType::LargeBattleship => ShipBundle::new_large_battleship(
+                            &asset_server,
+                            ShipDirection::Horizontal,
+                            0,
+                            0,
+                            &cells_query,
+                            &mut game_state,
+                        ),
+                        ShipType::AircraftCarrier => ShipBundle::new_aircraft_carrier(
                             &asset_server,
                             ShipDirection::Horizontal,
                             0,
@@ -241,6 +259,13 @@ fn handle_selected_ship_translation_with_cursor(
                     SLOT_SIZE
                 }
             }
+            ShipType::AircraftCarrier => {
+                if ship_direction == &ShipDirection::Horizontal {
+                    AIRCRAFT_CARRIER_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                } else {
+                    SLOT_SIZE
+                }
+            }
         } / 2.0;
 
         let y_range = match selected_ship.0 {
@@ -261,6 +286,13 @@ fn handle_selected_ship_translation_with_cursor(
             ShipType::LargeBattleship => {
                 if ship_direction == &ShipDirection::Vertical {
                     LARGE_BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                } else {
+                    SLOT_SIZE
+                }
+            }
+            ShipType::AircraftCarrier => {
+                if ship_direction == &ShipDirection::Vertical {
+                    AIRCRAFT_CARRIER_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
@@ -345,6 +377,13 @@ fn handle_selected_ship_button_drop(
                     SLOT_SIZE
                 }
             }
+            ShipType::AircraftCarrier => {
+                if ship_direction == &ShipDirection::Horizontal {
+                    AIRCRAFT_CARRIER_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                } else {
+                    SLOT_SIZE
+                }
+            }
         } / 2.0;
 
         let y_range = match selected_ship.0 {
@@ -365,6 +404,13 @@ fn handle_selected_ship_button_drop(
             ShipType::LargeBattleship => {
                 if ship_direction == &ShipDirection::Vertical {
                     LARGE_BATTLESHIP_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                } else {
+                    SLOT_SIZE
+                }
+            }
+            ShipType::AircraftCarrier => {
+                if ship_direction == &ShipDirection::Vertical {
+                    AIRCRAFT_CARRIER_SIZE as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                 } else {
                     SLOT_SIZE
                 }
@@ -414,6 +460,7 @@ fn handle_selected_ship_button_drop(
                 ShipType::Submarine => SUBMARINE_SIZE,
                 ShipType::Battleship => BATTLESHIP_SIZE,
                 ShipType::LargeBattleship => LARGE_BATTLESHIP_SIZE,
+                ShipType::AircraftCarrier => AIRCRAFT_CARRIER_SIZE,
             },
             ship_direction,
             cells_entities_and_data[0].1.column as i8,

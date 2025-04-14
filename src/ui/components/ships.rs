@@ -10,6 +10,7 @@ pub enum ShipType {
     Submarine,
     Battleship,
     LargeBattleship,
+    AircraftCarrier,
 }
 
 #[derive(Component, Clone, PartialEq, Debug)]
@@ -39,6 +40,7 @@ pub struct ShipBundle {
 pub const SUBMARINE_SIZE: usize = 1;
 pub const BATTLESHIP_SIZE: usize = 3;
 pub const LARGE_BATTLESHIP_SIZE: usize = 4;
+pub const AIRCRAFT_CARRIER_SIZE: usize = 5;
 
 #[allow(dead_code)]
 impl ShipBundle {
@@ -177,6 +179,61 @@ impl ShipBundle {
         }
     }
 
+    pub fn new_aircraft_carrier(
+        asset_server: &Res<AssetServer>,
+        direction: ShipDirection,
+        x: i8,
+        y: i8,
+        cells_query: &Query<(Entity, &Cell)>,
+        game_state: &mut ResMut<GameState>,
+    ) -> ShipBundle {
+
+        let color = if y > 4 {
+            game_state.total_ships_bot += 1;
+            Color::srgba(1.0, 1.0, 1.0, 0.0) // Azul claro para inimigos
+        } else {
+            game_state.total_ships_player += 1;
+            Color::srgba(1.0, 1.0, 1.0, 1.0) // Cor padrão para o jogador
+        };
+
+        ShipBundle {
+            ship: Ship {
+                r#type: ShipType::LargeBattleship,
+                cells: Self::find_cells_for_ship(
+                    x,
+                    y,
+                    AIRCRAFT_CARRIER_SIZE,
+                    &direction,
+                    &cells_query,
+                ),
+                sunk: false,
+            },
+            direction: direction.clone(),
+            transform: Transform {
+                translation: ShipBundle::calculate_position(
+                    AIRCRAFT_CARRIER_SIZE,
+                    &direction,
+                    x,
+                    y,
+                ),
+                rotation: match direction {
+                    ShipDirection::Horizontal => Quat::from_rotation_z(0.0),
+                    ShipDirection::Vertical => Quat::from_rotation_z(std::f32::consts::FRAC_PI_2),
+                },
+                ..Default::default()
+            },
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(
+                    AIRCRAFT_CARRIER_SIZE as f32 * SLOT_SIZE,
+                    SLOT_SIZE,
+                )),
+                image: asset_server.load("atlases/aircraft_carrier.png"),
+                color,
+                ..Default::default()
+            },
+        }
+    }
+
     pub fn calculate_position(ship_size: usize, direction: &ShipDirection, x: i8, y: i8) -> Vec3 {
         let x = x as f32;
         let y = y as f32;
@@ -186,13 +243,17 @@ impl ShipBundle {
                 (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
                     + (SLOT_SIZE * 1.5)
-            } else if ship_size == 1 {
+            } else if ship_size == SUBMARINE_SIZE {
                 (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
-            } else {
+            } else if ship_size == BATTLESHIP_SIZE {
                 (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
                     + SLOT_SIZE
+            } else {
+                (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                    - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
+                    + (SLOT_SIZE * 2.0 + SLOT_SPACE_BETWEEN)
             },
             if ship_size % 2 == 0 && direction == &ShipDirection::Vertical {
                 (y) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
