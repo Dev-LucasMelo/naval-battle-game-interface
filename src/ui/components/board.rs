@@ -213,18 +213,13 @@ fn show_victory_screen(
     if game_state.winner.is_some() {
         let winner = game_state.winner.unwrap();
 
-        // apagar navios
         for (entity, _ship) in ships_query.iter() {
-            commands.entity(entity).despawn(); //fecha programa
+            commands.entity(entity).despawn();
         }
 
-        // apagar celulas
         for (entity, _ship) in cells_query.iter() {
-            commands.entity(entity).despawn(); //fecha programa
+            commands.entity(entity).despawn();
         }
-
-        //limpar painel
-        //mudar visibilidade do painel
 
 
         let alvo = if winner == 0 {
@@ -233,7 +228,7 @@ fn show_victory_screen(
             "Bot"
         };
 
-        let textofinal  = format!("vencedor: {alvo}"); 
+        let textofinal  = format!("vencedor: {alvo}");
 
         let box_size = Vec2::new(400.0, 100.0);
         let box_position = Vec2::new(0.0, 100.0);
@@ -258,8 +253,5 @@ fn show_victory_screen(
                     Transform::from_translation(Vec3::Z),
                 ));
             });
-
-
-
     }
 }

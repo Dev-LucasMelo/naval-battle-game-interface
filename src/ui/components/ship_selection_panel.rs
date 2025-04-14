@@ -78,8 +78,6 @@ fn setup_ship_selection_panel(
     assert_server: Res<AssetServer>,
     mut commands: Commands,
 ) {
-
-
     commands
         .spawn(Node {
             position_type: PositionType::Absolute,
@@ -325,8 +323,6 @@ fn handle_selected_ship_button_drop(
     if mouse_button_input.just_released(MouseButton::Right)
         && window.cursor_options.grab_mode == CursorGrabMode::None
     {
-        let mut cells = Vec::new();
-
         let x_range = match selected_ship.0 {
             ShipType::Submarine => {
                 if ship_direction == &ShipDirection::Horizontal {
@@ -375,7 +371,9 @@ fn handle_selected_ship_button_drop(
             }
         } / 2.0;
 
-        for (_, cell_transform, _, cell, cell_side) in cells_query.iter() {
+        let mut cells_entities_and_data: Vec<(Entity, &Cell)> = Vec::new();
+
+        for (cell_entity, cell_transform, mut cell_sprite, cell, cell_side) in cells_query.iter_mut() {
             if cell_side == &CellSide::Enemy {
                 continue;
             }
@@ -386,11 +384,13 @@ fn handle_selected_ship_button_drop(
             let y2 = cell_transform.translation.y + y_range;
 
             if window_x >= x1 && window_x <= x2 && window_y >= y1 && window_y <= y2 {
-                cells.push(cell);
+                cell_sprite.color = Color::srgb(0.0, 1.0, 0.0);
+                println!("Selected cell: {:?}", cell);
+                cells_entities_and_data.push((cell_entity, cell));
             }
         }
 
-        if cells.len() == 0 {
+        if ship.cells.len() == 0 {
             commands.entity(selected_ship_entity).despawn_recursive();
             window.cursor_options.grab_mode = CursorGrabMode::None;
             window.cursor_options.visible = true;
@@ -401,7 +401,7 @@ fn handle_selected_ship_button_drop(
             .entity(selected_ship_entity)
             .remove::<SelectedShip>();
 
-        cells.sort_by(|a, b| {
+        cells_entities_and_data.sort_by(|(_, a), (_, b)| {
             if a.row == b.row {
                 a.column.cmp(&b.column)
             } else {
@@ -416,18 +416,17 @@ fn handle_selected_ship_button_drop(
                 ShipType::LargeBattleship => LARGE_BATTLESHIP_SIZE,
             },
             ship_direction,
-            cells[0].column as i8,
-            cells[0].row as i8,
+            cells_entities_and_data[0].1.column as i8,
+            cells_entities_and_data[0].1.row as i8,
         );
 
         ship_transform.translation.x = final_ship_position.x;
         ship_transform.translation.y = final_ship_position.y;
         ship_transform.translation.z = final_ship_position.z;
 
-        ship.cells = cells_query
+        ship.cells = cells_entities_and_data
             .iter()
-            .filter(|(_, _, _, cell, _)| cells.iter().any(|c| c.column == cell.column && c.row == cell.row))
-            .map(|(entity, _, _, _, _)| entity)
+            .map(|(cell_entity, _)| *cell_entity)
             .collect();
 
         //mudar cor do navio caso ele esteja numa posição inimiga (descomentar quando a funcionalidade do inimigo posicionar navio estiver funcionando)

@@ -186,9 +186,13 @@ impl ShipBundle {
                 (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
                     + (SLOT_SIZE * 1.5)
+            } else if ship_size == 1 {
+                (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
+                    - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
             } else {
                 (x) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
                     - (ROWS as f32 * (SLOT_SIZE + SLOT_SPACE_BETWEEN) / 2.0)
+                    + SLOT_SIZE
             },
             if ship_size % 2 == 0 && direction == &ShipDirection::Vertical {
                 (y) * (SLOT_SIZE + SLOT_SPACE_BETWEEN)
@@ -253,7 +257,7 @@ pub fn debug_spawn_submarine(
 
     // commands.spawn(ShipBundle::new_battleship(
     //     &asset_server,
-    //     ShipDirection::Vertical,
+    //     ShipDirection::Horizontal,
     //     6,
     //     6,
     //     &cells_query,
@@ -270,14 +274,14 @@ pub fn debug_spawn_submarine(
     ));
 
     //peça do jogador
-    commands.spawn(ShipBundle::new_large_battleship(
-        &asset_server,
-        ShipDirection::Vertical,
-        9,
-        1,
-        &cells_query,
-        &mut game_state,
-    ));
+    // commands.spawn(ShipBundle::new_large_battleship(
+    //     &asset_server,
+    //     ShipDirection::Vertical,
+    //     9,
+    //     1,
+    //     &cells_query,
+    //     &mut game_state,
+    // ));
 
     // commands.spawn(ShipBundle::new_battleship(
     //     &asset_server,
@@ -288,14 +292,14 @@ pub fn debug_spawn_submarine(
     //     &mut game_state,
     // ));
 
-    commands.spawn(ShipBundle::new_submarine(
-        &asset_server,
-        ShipDirection::Horizontal,
-        7,
-        3,
-        &cells_query,
-        &mut game_state,
-    ));
+    // commands.spawn(ShipBundle::new_submarine(
+    //     &asset_server,
+    //     ShipDirection::Horizontal,
+    //     7,
+    //     3,
+    //     &cells_query,
+    //     &mut game_state,
+    // ));
 
 
 }
