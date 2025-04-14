@@ -1,4 +1,7 @@
+use std::collections::HashSet;
+
 use bevy::prelude::*;
+use rand::Rng;
 
 use crate::logic::cell::Cell;
 
@@ -132,7 +135,6 @@ impl ShipBundle {
         cells_query: &Query<(Entity, &Cell)>,
         game_state: &mut ResMut<GameState>,
     ) -> ShipBundle {
-
         let color = if y > 4 {
             game_state.total_ships_bot += 1;
             Color::srgba(1.0, 1.0, 1.0, 0.0) // Azul claro para inimigos
@@ -187,7 +189,6 @@ impl ShipBundle {
         cells_query: &Query<(Entity, &Cell)>,
         game_state: &mut ResMut<GameState>,
     ) -> ShipBundle {
-
         let color = if y > 4 {
             game_state.total_ships_bot += 1;
             Color::srgba(1.0, 1.0, 1.0, 0.0) // Azul claro para inimigos
@@ -306,63 +307,72 @@ pub fn debug_spawn_submarine(
     cells_query: Query<(Entity, &Cell)>,
     mut game_state: ResMut<GameState>,
 ) {
-    //peça do bot
-    commands.spawn(ShipBundle::new_large_battleship(
-        &asset_server,
-        ShipDirection::Vertical,
-        4,
-        5,
-        &cells_query,
-        &mut game_state,
-    ));
+    let mut rng = rand::thread_rng();
+    let mut occupied_cells: HashSet<(usize, usize)> = HashSet::new();
 
-    // commands.spawn(ShipBundle::new_battleship(
-    //     &asset_server,
-    //     ShipDirection::Horizontal,
-    //     6,
-    //     6,
-    //     &cells_query,
-    //     &mut game_state,
-    // ));
+    let ships_to_spawn = vec![
+        (ShipType::AircraftCarrier, 5),
+        (ShipType::LargeBattleship, 4),
+        (ShipType::Battleship, 3),
+        (ShipType::Submarine, 1),
+    ];
 
-    commands.spawn(ShipBundle::new_submarine(
-        &asset_server,
-        ShipDirection::Vertical,
-        9,
-        7,
-        &cells_query,
-        &mut game_state,
-    ));
+    for (ship_type, size) in ships_to_spawn {
+        let mut placed = false;
 
-    //peça do jogador
-    // commands.spawn(ShipBundle::new_large_battleship(
-    //     &asset_server,
-    //     ShipDirection::Vertical,
-    //     9,
-    //     1,
-    //     &cells_query,
-    //     &mut game_state,
-    // ));
+        while !placed {
+            let x = rng.gen_range(0..=(10 - size as i8));
+            let y = rng.gen_range(5..10);
 
-    // commands.spawn(ShipBundle::new_battleship(
-    //     &asset_server,
-    //     ShipDirection::Horizontal,
-    //     4,
-    //     1,
-    //     &cells_query,
-    //     &mut game_state,
-    // ));
+            let ship_cells: Vec<(usize, usize)> = (0..size)
+                .map(|i| ((x + i as i8) as usize, y as usize))
+                .collect();
 
-    // commands.spawn(ShipBundle::new_submarine(
-    //     &asset_server,
-    //     ShipDirection::Horizontal,
-    //     7,
-    //     3,
-    //     &cells_query,
-    //     &mut game_state,
-    // ));
+            if ship_cells.iter().all(|pos| !occupied_cells.contains(pos)) {
+                for cell in &ship_cells {
+                    occupied_cells.insert(*cell);
+                }
 
+                let bundle = match ship_type {
+                    ShipType::AircraftCarrier => ShipBundle::new_aircraft_carrier(
+                        &asset_server,
+                        ShipDirection::Horizontal,
+                        x,
+                        y,
+                        &cells_query,
+                        &mut game_state,
+                    ),
+                    ShipType::LargeBattleship => ShipBundle::new_large_battleship(
+                        &asset_server,
+                        ShipDirection::Horizontal,
+                        x,
+                        y,
+                        &cells_query,
+                        &mut game_state,
+                    ),
+                    ShipType::Battleship => ShipBundle::new_battleship(
+                        &asset_server,
+                        ShipDirection::Horizontal,
+                        x,
+                        y,
+                        &cells_query,
+                        &mut game_state,
+                    ),
+                    ShipType::Submarine => ShipBundle::new_submarine(
+                        &asset_server,
+                        ShipDirection::Horizontal,
+                        x,
+                        y,
+                        &cells_query,
+                        &mut game_state,
+                    ),
+                };
 
+                commands.spawn(bundle);
+                placed = true;
+            }
+        }
+    }
 }
 
 // função que vai escutar a mudança de sunk e vai fazer algo a partir disso
